@@ -44,12 +44,7 @@ class Viewer:
         @self.app.route('/get_grid')
         def get_grid():
             with self.lock:
-                # Convert numpy array to list and include colors
-                grid_data = {
-                    "grid": self.universe.grid.tolist(),
-                    "colors": OUTPUT_COLOR_MAP
-                }
-                return jsonify(grid_data)
+                return jsonify({"grid": self.universe.grid.tolist()})
 
 
     def run(self):

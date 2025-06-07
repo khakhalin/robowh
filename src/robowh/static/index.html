@@ -20,14 +20,6 @@
             padding: 2px;
             background: #EEE;
         }
-        .grid {
-            display: grid;
-            gap: 0px;
-        }
-        .cell {
-            width: 3px;
-            height: 3px;
-        }
         .diagnostics {
             min-width: 150px;
             padding: 10px;
@@ -39,12 +31,15 @@
             padding: 5px 10px;
             font-size: 10pt;
         }
+        canvas {
+            border: 1px solid #999;
+        }
     </style>
 </head>
 <body>
     <div class="main-container">
         <div class="grid-container">
-            <div id="gridContainer" class="grid"></div>
+            <canvas id="gridCanvas"></canvas>
         </div>
 
         <div class="diagnostics">
@@ -54,29 +49,51 @@
     </div>
 
     <script>
-        // Grid update
+        // Define color map directly in the frontend
+        const COLOR_MAP = {
+            0: '#FFFFFF',  // empty
+            1: '#000000',  // rack
+            2: '#008080',  // robot
+            3: '#0000FF',  // storing or retrieving
+            4: '#F0E68C',  // confused robot
+            5: '#FF0000'   // broken robot
+        };
+
+        const CELL_SIZE = 3;  // pixels per cell
+        const canvas = document.getElementById('gridCanvas');
+        const ctx = canvas.getContext('2d');
+
         async function updateGrid() {
             try {
                 const response = await fetch('/get_grid');
                 const data = await response.json();
-                const container = document.getElementById('gridContainer');
+                const grid = data.grid;
 
-                container.style.gridTemplateColumns =
-                    `repeat(${data.grid[0].length}, 3px)`;
+                // Set canvas size if needed
+                if (canvas.width !== grid[0].length * CELL_SIZE ||
+                    canvas.height !== grid.length * CELL_SIZE) {
+                    canvas.width = grid[0].length * CELL_SIZE;
+                    canvas.height = grid.length * CELL_SIZE;
+                }
 
-                let html = '';
-                data.grid.flat().forEach(value => {
-                    html += `<div class="cell"
-                             style="background-color: ${data.colors[value]}"></div>`;
-                });
-
-                container.innerHTML = html;
+                // Draw the grid
+                for (let y = 0; y < grid.length; y++) {
+                    for (let x = 0; x < grid[0].length; x++) {
+                        const value = grid[y][x];
+                        ctx.fillStyle = COLOR_MAP[value];
+                        ctx.fillRect(
+                            x * CELL_SIZE,
+                            y * CELL_SIZE,
+                            CELL_SIZE,
+                            CELL_SIZE
+                        );
+                    }
+                }
             } catch (error) {
                 console.error('Grid update error:', error);
             }
         }
 
-        // Number update
         async function updateNumber() {
             try {
                 const response = await fetch('/get_number');
@@ -88,7 +105,6 @@
             }
         }
 
-        // Add robot button
         document.getElementById('addRobot').addEventListener('click', async () => {
             try {
                 await fetch('/add_robot', { method: 'POST' });
