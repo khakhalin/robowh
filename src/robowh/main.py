@@ -1,11 +1,13 @@
 # my-python-project/src/main.py
 
-def a():
-    """A simple function that does nothing."""
-    pass
-
-def main():
-    print("Welcome to the Robotic Warehouse Simulator!")
+from robowh.viewer import Viewer
 
 if __name__ == "__main__":
-    main()
+    print("Welcome to the Robotic Warehouse Simulator!")
+
+    viewer = Viewer()
+
+    try:
+        viewer.run()
+    except KeyboardInterrupt:
+        print('\nServer stopped by user')

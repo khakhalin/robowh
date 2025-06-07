@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Viewer</title>
+</head>
+<body>
+    <h1>Current Number: <span id="number">0.0000</span></h1>
+
+    <script>
+        async function updateNumber() {
+            try {
+                const response = await fetch('/get_number');
+                const data = await response.json();
+                document.getElementById('number').textContent =
+                    data.number.toFixed(4);
+            } catch (error) {
+                console.error('Error fetching number:', error);
+            }
+        }
+
+        // Update 20 times/second (every 50ms)
+        setInterval(updateNumber, 50);
+        updateNumber(); // Initial call
+    </script>
+</body>
+</html>
