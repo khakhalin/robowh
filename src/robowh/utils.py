@@ -19,3 +19,11 @@ class ColorFormatter(logging.Formatter):
         # DEBUG: no color
         return super().format(record)
 
+grid_codes = {
+    'empty':0,
+    'rack':1,
+    'robot':2,
+    'operation':3,
+    'confusion':4,
+    'error':5
+}

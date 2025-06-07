@@ -4,8 +4,8 @@ import logging
 import sys
 from robowh.utils import ColorFormatter
 
-formatter = ColorFormatter(fmt="%(asctime)s: %(levelname)s: %(funcName)s: %(message)s",
-                          datefmt='%I:%M:%S')
+formatter = ColorFormatter(
+    fmt="%(asctime)s: %(levelname)s: %(funcName)s: %(message)s", datefmt='%I:%M:%S')
 hnd = logging.StreamHandler(stream=sys.stdout)
 
 logger = logging.getLogger()

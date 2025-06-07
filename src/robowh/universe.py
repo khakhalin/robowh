@@ -8,14 +8,25 @@ import random
 import time
 import threading
 
+from robowh.robot import Robot
+from robowh.utils import grid_codes
+
 class Universe:
-    MAX_UPDATE_TIME = 0.05  # 50 ms
+    # TODO: Move these constants to some config file
+    MAX_UPDATE_TIME = 0.01  # 10 ms
+    GRID_SIZE = 100
+    N_ROBOTS = 70
 
     def __init__(self):
         logger.info("Spawning a new universe (but not starting it yet)")
         self.diagnostic_number = 0.0  # A toy example for now
-        self.grid = np.zeros((100, 100))  # A toy example grid
+        self.grid = np.zeros((self.GRID_SIZE, self.GRID_SIZE))
         self.lock = threading.Lock()
+
+        self.robots = []
+        for i in range(self.N_ROBOTS):
+            robot = Robot(name=f"Robot_{i+1}", universe=self)
+            self.robots.append(robot)
 
     def start_universe(self):
         """Starting the universe."""
@@ -28,30 +39,13 @@ class Universe:
                 with self.lock:
                     self.diagnostic_number += random.uniform(-0.01, 0.01)
 
-                # Create a new grid for this cycle
-                new_grid = np.zeros((100, 100))
-
-                # First update - always happens
-                if time.time() - start_time < self.MAX_UPDATE_TIME:
-                    update = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
-                    with self.lock:
-                        new_grid += update
-
-                # Second update - only if time permits
-                if time.time() - start_time < self.MAX_UPDATE_TIME:
-                    update = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
-                    with self.lock:
-                        new_grid += update
-
-                # Third update - only if time permits
-                if time.time() - start_time < self.MAX_UPDATE_TIME:
-                    update = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
-                    with self.lock:
-                        new_grid += update
-
-                # Final update of the grid
-                with self.lock:
-                    self.grid = new_grid
+                # Rearrange robots randomly
+                sequence = random.sample(range(len(self.robots)), len(self.robots))
+                for i in sequence:
+                    if time.time() - start_time < self.MAX_UPDATE_TIME:
+                        robot = self.robots[i]
+                        with self.lock:
+                            robot.move()
 
                 elapsed_time = time.time() - start_time
                 sleep_time = max(0, self.MAX_UPDATE_TIME - elapsed_time)
@@ -59,3 +53,19 @@ class Universe:
 
         thread = threading.Thread(target=update_universe, daemon=True)
         thread.start()
+
+    def random_empty_position(self):
+        """Get a random empty position in the grid."""
+        with self.lock:
+            empty_positions = np.argwhere(self.grid == grid_codes['empty'])
+            if empty_positions.size == 0:
+                raise ValueError("No empty positions available in the grid.")
+            position = random.choice(empty_positions)
+            return tuple(position)
+
+    def grid_is_free(self, x, y):
+        """Try to move robot to new position. Return success/failure."""
+        if (0 <= x < self.GRID_SIZE and 0 <= y < self.GRID_SIZE):
+            if self.grid[x, y] == grid_codes['empty']:
+                return True
+        return False
