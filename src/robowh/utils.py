@@ -18,3 +18,13 @@ class ColorFormatter(logging.Formatter):
             record.levelname = f'{self.RED}{levelname}{self.RESET}'
         # DEBUG: no color
         return super().format(record)
+
+
+OUTPUT_COLOR_MAP = {
+    0: '#FFFFFF',  # white
+    1: '#000000',  # black
+    2: '#008080',  # teal
+    3: '#0000FF',  # blue
+    4: '#F0E68C',  # khaki
+    5: '#FF0000'   # red
+}

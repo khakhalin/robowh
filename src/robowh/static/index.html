@@ -1,26 +1,107 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>System Viewer</title>
+    <title>Warehouse Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            background: white;
+        }
+        .main-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .grid-container {
+            border: 1px solid #999;
+            padding: 2px;
+            background: #EEE;
+        }
+        .grid {
+            display: grid;
+            gap: 0px;
+        }
+        .cell {
+            width: 3px;
+            height: 3px;
+        }
+        .diagnostics {
+            min-width: 150px;
+            padding: 10px;
+            border: 1px solid #CCC;
+            border-radius: 4px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            font-size: 10pt;
+        }
+    </style>
 </head>
 <body>
-    <h1>Current Number: <span id="number">0.0000</span></h1>
+    <div class="main-container">
+        <div class="grid-container">
+            <div id="gridContainer" class="grid"></div>
+        </div>
+
+        <div class="diagnostics">
+            <div>Current value: <span id="numberValue">0.0000</span></div>
+            <button id="addRobot">Add Robot</button>
+        </div>
+    </div>
 
     <script>
+        // Grid update
+        async function updateGrid() {
+            try {
+                const response = await fetch('/get_grid');
+                const data = await response.json();
+                const container = document.getElementById('gridContainer');
+
+                container.style.gridTemplateColumns =
+                    `repeat(${data.grid[0].length}, 3px)`;
+
+                let html = '';
+                data.grid.flat().forEach(value => {
+                    html += `<div class="cell"
+                             style="background-color: ${data.colors[value]}"></div>`;
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Grid update error:', error);
+            }
+        }
+
+        // Number update
         async function updateNumber() {
             try {
                 const response = await fetch('/get_number');
                 const data = await response.json();
-                document.getElementById('number').textContent =
+                document.getElementById('numberValue').textContent =
                     data.number.toFixed(4);
             } catch (error) {
-                console.error('Error fetching number:', error);
+                console.error('Number update error:', error);
             }
         }
 
-        // Update 20 times/second (every 50ms)
-        setInterval(updateNumber, 50);
-        updateNumber(); // Initial call
+        // Add robot button
+        document.getElementById('addRobot').addEventListener('click', async () => {
+            try {
+                await fetch('/add_robot', { method: 'POST' });
+            } catch (error) {
+                console.error('Failed to add robot:', error);
+            }
+        });
+
+        // Start updates
+        setInterval(() => {
+            updateGrid();
+            updateNumber();
+        }, 50);
     </script>
 </body>
 </html>
