@@ -24,6 +24,6 @@ grid_codes = {
     'rack':1,
     'robot':2,
     'operation':3,
-    'confusion':4,
-    'error':5
+    'confused':4,
+    'payload':5
 }

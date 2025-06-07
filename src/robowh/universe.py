@@ -10,23 +10,31 @@ import threading
 
 from robowh.robot import Robot
 from robowh.utils import grid_codes
+from robowh.strategies import StrategyLibary
 
 class Universe:
     # TODO: Move these constants to some config file
-    MAX_UPDATE_TIME = 0.01  # 10 ms
+    MAX_UPDATE_TIME = 0.1  # 10 ms
     GRID_SIZE = 100
     N_ROBOTS = 70
     RACK_SPACING = 15
 
     def __init__(self):
         logger.info("Spawning a new universe (but not starting it yet)")
+        self.lock = threading.Lock()
+
+        self.strategy_library = StrategyLibary()
+
         self.diagnostic_number = 0.0  # A toy example for now
         self.grid = self.create_racks()
-        self.lock = threading.Lock()
 
         self.robots = []
         for i in range(self.N_ROBOTS):
-            robot = Robot(name=f"Robot_{i+1}", universe=self)
+            robot = Robot(
+                name=f"Robot_{i+1}",
+                universe=self,
+                strategy=self.strategy_library.random
+                )
             self.robots.append(robot)
 
     def create_racks(self):
@@ -34,7 +42,8 @@ class Universe:
         logger.info("Creating the grid of racks")
         grid = np.full((self.GRID_SIZE, self.GRID_SIZE), grid_codes['empty'], dtype=int)
 
-        # Set up racks as vertical lines padded by empty spaces, and equally spaced
+        # Set up racks as vertical lines padded by empty spaces, and equally spaced.
+        # We have some magic numbers here, to make the picture prettier. Sorry!
         for j in range(self.RACK_SPACING, self.GRID_SIZE, self.RACK_SPACING):
             if j + 1 < self.GRID_SIZE:
                 for i in range(self.RACK_SPACING*2, self.GRID_SIZE - self.RACK_SPACING):
