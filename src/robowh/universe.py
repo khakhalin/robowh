@@ -24,20 +24,34 @@ class Universe:
             while True:
                 start_time = time.time()
 
+                # Update diagnostic number
                 with self.lock:
                     self.diagnostic_number += random.uniform(-0.01, 0.01)
 
-                    # First update - always happens
-                    if time.time() - start_time < self.MAX_UPDATE_TIME:
-                        self.grid = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
+                # Create a new grid for this cycle
+                new_grid = np.zeros((100, 100))
 
-                    # Second update - only if time permits
-                    if time.time() - start_time < self.MAX_UPDATE_TIME:
-                        self.grid = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
+                # First update - always happens
+                if time.time() - start_time < self.MAX_UPDATE_TIME:
+                    update = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
+                    with self.lock:
+                        new_grid += update
 
-                    # Third update - only if time permits
-                    if time.time() - start_time < self.MAX_UPDATE_TIME:
-                        self.grid = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
+                # Second update - only if time permits
+                if time.time() - start_time < self.MAX_UPDATE_TIME:
+                    update = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
+                    with self.lock:
+                        new_grid += update
+
+                # Third update - only if time permits
+                if time.time() - start_time < self.MAX_UPDATE_TIME:
+                    update = (np.random.uniform(low=0, high=1, size=(100, 100)) < 0.01)*1
+                    with self.lock:
+                        new_grid += update
+
+                # Final update of the grid
+                with self.lock:
+                    self.grid = new_grid
 
                 elapsed_time = time.time() - start_time
                 sleep_time = max(0, self.MAX_UPDATE_TIME - elapsed_time)
