@@ -8,18 +8,31 @@ import random
 import time
 import threading
 
-from robowh.robot import Robot
 from robowh.utils import grid_codes
 from robowh.strategies import StrategyLibary
 
 class Universe:
+    """A singleton Universe object."""
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        """CLassic singleton pattern."""
+        if cls._instance is None:
+            cls._instance = super(Universe, cls).__new__(cls)
+            cls._instance._init()
+        return cls._instance
+
+    @classmethod
+    def get_universe(cls):
+        return cls._instance or cls()
+
     # TODO: Move these constants to some config file
     MAX_UPDATE_TIME = 0.1  # 10 ms
     GRID_SIZE = 100
     N_ROBOTS = 70
     RACK_SPACING = 15
 
-    def __init__(self):
+    def _init(self):
         logger.info("Spawning a new universe (but not starting it yet)")
         self.lock = threading.Lock()
 
@@ -29,10 +42,10 @@ class Universe:
         self.grid = self.create_racks()
 
         self.robots = []
+        from robowh.robot import Robot  # Deferred import to avoid circular dependency
         for i in range(self.N_ROBOTS):
             robot = Robot(
                 name=f"Robot_{i+1}",
-                universe=self,
                 strategy=self.strategy_library.random
                 )
             self.robots.append(robot)

@@ -22,7 +22,7 @@ from robowh.universe import Universe
 
 if __name__ == "__main__":
     logger.info("Welcome to the Robotic Warehouse Simulator!")
-    universe = Universe()
+    universe = Universe.get_universe()
     viewer = Viewer(universe)
 
     try:
