@@ -16,17 +16,30 @@ class Universe:
     MAX_UPDATE_TIME = 0.01  # 10 ms
     GRID_SIZE = 100
     N_ROBOTS = 70
+    RACK_SPACING = 15
 
     def __init__(self):
         logger.info("Spawning a new universe (but not starting it yet)")
         self.diagnostic_number = 0.0  # A toy example for now
-        self.grid = np.zeros((self.GRID_SIZE, self.GRID_SIZE))
+        self.grid = self.create_racks()
         self.lock = threading.Lock()
 
         self.robots = []
         for i in range(self.N_ROBOTS):
             robot = Robot(name=f"Robot_{i+1}", universe=self)
             self.robots.append(robot)
+
+    def create_racks(self):
+        """Create a grid with empty positions and racks."""
+        logger.info("Creating the grid of racks")
+        grid = np.full((self.GRID_SIZE, self.GRID_SIZE), grid_codes['empty'], dtype=int)
+
+        # Set up racks as vertical lines padded by empty spaces, and equally spaced
+        for j in range(self.RACK_SPACING, self.GRID_SIZE, self.RACK_SPACING):
+            if j + 1 < self.GRID_SIZE:
+                for i in range(self.RACK_SPACING*2, self.GRID_SIZE - self.RACK_SPACING):
+                    grid[i, j] = grid_codes['rack']
+        return grid
 
     def start_universe(self):
         """Starting the universe."""

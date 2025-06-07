@@ -37,13 +37,13 @@ class Viewer:
 
         @self.app.route('/get_number')  # Toy example
         def get_number():
-            # with self.lock:
             return jsonify({'number': self.universe.diagnostic_number})
 
         @self.app.route('/get_grid')
         def get_grid():
-            # with self.lock:
-            return jsonify({"grid": self.universe.grid.copy().tolist()})
+            # No need to lock, as we are only reading here.
+            # We're flipping the grid, to have the Y axis go from top to bottom
+            return jsonify({"grid": self.universe.grid[::-1, :].copy().tolist()})
 
 
     def run(self):
