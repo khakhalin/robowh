@@ -1,2 +1,3 @@
-# robowh
-A conceptual sketch of a robotic warehouse
+# Robotic Warehouse - A sketch
+
+This is a draft of a robotic warehouse simulator.
