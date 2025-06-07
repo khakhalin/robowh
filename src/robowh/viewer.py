@@ -4,7 +4,6 @@ logger = logging.getLogger(__name__)
 from flask import Flask, jsonify, send_from_directory
 import threading
 
-from robowh.utils import OUTPUT_COLOR_MAP
 
 
 # Suppress console logging for selected Viewer interfaces
@@ -38,13 +37,13 @@ class Viewer:
 
         @self.app.route('/get_number')  # Toy example
         def get_number():
-            with self.lock:
-                return jsonify({'number': self.universe.diagnostic_number})
+            # with self.lock:
+            return jsonify({'number': self.universe.diagnostic_number})
 
         @self.app.route('/get_grid')
         def get_grid():
-            with self.lock:
-                return jsonify({"grid": self.universe.grid.tolist()})
+            # with self.lock:
+            return jsonify({"grid": self.universe.grid.copy().tolist()})
 
 
     def run(self):
