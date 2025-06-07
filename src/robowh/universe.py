@@ -74,7 +74,7 @@ class Universe:
                 with self.lock:
                     self.diagnostic_number += random.uniform(-0.01, 0.01)
 
-                # Rearrange robots randomly
+                # Rearrange robots randomly, to not have favorites during bottlenecking
                 sequence = random.sample(range(len(self.robots)), len(self.robots))
                 for i in sequence:
                     if time.time() - start_time < self.MAX_UPDATE_TIME:

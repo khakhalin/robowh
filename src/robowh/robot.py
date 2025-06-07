@@ -37,8 +37,12 @@ class Robot:
 
     def move(self):
         """Request a random move."""
-        movement = self.strategy.calculate_path(
-            current_pos=(self.x, self.y), target_pos=(0, 0), n_steps=1)[0]
+        # Check if we are out of ideas, in which case, think
+        if len(self.program) == 0:
+            self.program = self.strategy.calculate_path((self.x, self.y), (0, 0))
+            # TODO: Here I requested a default number of steps, which is dangerous.
+
+        movement = self.program.pop(0)  # Next element (reading L to R)
         new_x = self.x + movement[0]
         new_y = self.y + movement[1]
 
@@ -53,3 +57,5 @@ class Robot:
         else:
             universe.grid[self.x, self.y] = grid_codes['confused']
             self.substate = 'confused'
+            # Depending on the strategy, it could be a good point to replan from scratch.
+            # TODO: introduce some flexibility here. Always replan? Sometimes replan?
