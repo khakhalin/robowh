@@ -1,9 +1,8 @@
-from flask import Flask, jsonify, send_from_directory
-import random
-import time
-import threading
-
 import logging
+logger = logging.getLogger(__name__)
+
+from flask import Flask, jsonify, send_from_directory
+import threading
 
 # Suppress console logging for selected Viewer interfaces
 class NoGetNumber(logging.Filter):
@@ -17,13 +16,14 @@ logging.getLogger('werkzeug').addFilter(NoGetNumber())
 
 
 class Viewer:
-    def __init__(self):
+    def __init__(self, universe):
+        logger.info("Starting the Viewer")
         self.app = Flask(__name__, static_folder='static')
-        self.diagnostic_number = 0.0  # A toy example for now
         self.lock = threading.Lock()
 
         self._setup_routes()
-        self._start_number_updater()
+        self.universe = universe
+        self.universe.start_universe()
 
 
     def _setup_routes(self):
@@ -31,23 +31,12 @@ class Viewer:
         @self.app.route('/get_number')
         def get_number():
             with self.lock:
-                return jsonify({'number': self.diagnostic_number})
+                return jsonify({'number': self.universe.diagnostic_number})
 
         @self.app.route('/')
         def index():
             # Serve the HTML file from the static directory
             return send_from_directory(self.app.static_folder, 'index.html')
-
-
-    def _start_number_updater(self):
-        def update_number():
-            while True:
-                with self.lock:
-                    self.diagnostic_number += random.uniform(-0.01, 0.01)
-                time.sleep(0.05)
-
-        thread = threading.Thread(target=update_number, daemon=True)
-        thread.start()
 
     def run(self):
         self.app.run(port=5000)
