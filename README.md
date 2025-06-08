@@ -22,7 +22,7 @@ The system consists of several units:
 1. **GUI** - a front-end, vibe-coded in JS, talking to a flask backend
 2. **View** - a flask backend responding to requests from the Visualizer
 3. **Universe** - mostly a time-engine. IRL robots would move around on their own and communicate with the orchestrator asynchronously. In this model we have a singleton Physics engine that nudges other players one by one, allowing them to perform certan actions. It's not true concurrency, but for this purpose it's good enough. In practice will work with turns (time ticks), and each turn will take a certain amount of time. During a turn, robots will be given priority in random order. If all of them manage to get processed, great! If not, the turn will be over, and the priority will be passed to system operations (Observer, Scheduler), until a new turn is started.
-4. **Orchestrator** - the main logic of the warehouse: receiving orders from scheduler, assigning storage positions to incoming loads, assigning tasks to robots.
+4. **Orchestrator** - the main logic of the warehouse: receiving orders from scheduler, assigning storage positions to incoming loads, remembering positions of stored goods, assigning tasks to robots.
 5. **Robots** - each robot is an object that interfaces with Physics (on movement and other robot-driven actions) and with the Orchestrator (getting tasks from it, and reporting back)
 6. **Strategies** - abstracted pathfinding methods that for a given start and end points calculate a given number of steps in the direction of this point
 6. **Observer** - collects diagnostic information about the state of the system

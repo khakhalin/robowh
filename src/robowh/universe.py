@@ -10,6 +10,7 @@ import threading
 
 from robowh.utils import grid_codes
 from robowh.strategies import StrategyLibary
+from robowh.scheduler import Scheduler
 
 class Universe:
     """A singleton Universe object."""
@@ -36,11 +37,14 @@ class Universe:
         logger.info("Spawning a new universe (but not starting it yet)")
         self.lock = threading.Lock()
 
+        # Connect global objects here
         self.strategy_library = StrategyLibary()
+        self.scheduler = Scheduler(self)
 
-        self.diagnostic_number = 0.0  # A toy example for now
+        # Create the structure of the WH
         self.grid = self.create_racks()
 
+        # Robots
         self.robots = []
         from robowh.robot import Robot  # Deferred import to avoid circular dependency
         for i in range(self.N_ROBOTS):
@@ -49,6 +53,10 @@ class Universe:
                 strategy=self.strategy_library.random
                 )
             self.robots.append(robot)
+
+        # Set tracking numbers (temporary? Should go to the Observer class?)
+        self.diagnostic_number = 0.0  # A toy example for now
+
 
     def create_racks(self):
         """Create a grid with empty positions and racks."""

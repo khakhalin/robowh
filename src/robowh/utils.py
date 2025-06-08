@@ -3,6 +3,7 @@
 import logging
 
 class ColorFormatter(logging.Formatter):
+    """Custom color formatter for logging messages."""
     BLUE = '\033[94m'
     YELLOW = '\033[93m'
     RED = '\033[91m'
@@ -19,6 +20,8 @@ class ColorFormatter(logging.Formatter):
         # DEBUG: no color
         return super().format(record)
 
+# A dictionary of codes used to represent the WH on a grid.
+# To change the colors for these, you'll need to go to the UI html and change them there.
 grid_codes = {
     'empty':0,
     'rack':1,

@@ -5,7 +5,7 @@ from typing import List, Tuple
 import random
 
 class StrategyLibary():
-    """An instance of this class would contain an each strategy."""
+    """An instance of this class contains each strategy, as a class."""
     def __init__(self):
         _strategies = {
             'astar': AStarStrategy,
