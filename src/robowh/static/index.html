@@ -43,8 +43,9 @@
         </div>
 
         <div class="diagnostics">
-            <div>Current value: <span id="numberValue">0.0000</span></div>
-            <button id="addRobot">Add Robot</button>
+            <div>N processed: <span id="n_processed">TODO</span></div>
+            <div>N confused: <span id="n_confused">0.0000</span></div>
+            <button id="addRobot">Add Inventory</button>
         </div>
     </div>
 
@@ -96,10 +97,10 @@
 
         async function updateNumber() {
             try {
-                const response = await fetch('/get_number');
+                const response = await fetch('/get_kpis');
                 const data = await response.json();
-                document.getElementById('numberValue').textContent =
-                    data.number.toFixed(4);
+                document.getElementById('n_confused').textContent =
+                    data.n_confused.toFixed(4);
             } catch (error) {
                 console.error('Number update error:', error);
             }
