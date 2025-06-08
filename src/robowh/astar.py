@@ -1,5 +1,8 @@
 """A-star algorithm implementation."""
 
+import logging
+logger = logging.getLogger(__name__)
+
 import heapq
 import numpy as np
 
@@ -17,9 +20,6 @@ class Node:
 
 def find_path(grid, start, goal):
     """Core A* implementation returning list of positions (empty if no path)."""
-    if not _valid_pos(grid, start) or not _valid_pos(grid, goal):
-        return []
-
     open_heap = []
     closed_set = set()
     g_costs = {start: 0}
@@ -62,6 +62,7 @@ def _heuristic(pos, target):
     return abs(pos[0] - target[0]) + abs(pos[1] - target[1])
 
 def _valid_pos(grid, pos):
+    """This position is not taken by a rack."""
     y, x = pos
     return (0 <= y < grid.shape[0] and
             0 <= x < grid.shape[1] and

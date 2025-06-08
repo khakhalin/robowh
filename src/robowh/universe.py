@@ -28,7 +28,7 @@ class Universe:
     # TODO: Move these constants to some config file
     MAX_UPDATE_TIME = 0.1  # 10 ms
     GRID_SIZE = 33
-    N_ROBOTS = 3
+    N_ROBOTS = 13
     RACK_SPACING = 7
 
     def _init(self):
@@ -54,7 +54,7 @@ class Universe:
         for i in range(self.N_ROBOTS):
             robot = Robot(
                 name=f"R{i+1:03d}",
-                strategy=self.strategy_library.random
+                strategy=self.strategy_library.astar
                 )
             self.robots.append(robot)
 
@@ -103,13 +103,12 @@ class Universe:
 
     def random_empty_position(self):
         """Get a random empty position in the grid."""
-        with self.lock:
-            empty_positions = np.argwhere(self.grid == grid_codes['empty'])
-            if empty_positions.size == 0:
-                raise ValueError("No empty positions available in the grid.")
-            position = random.choice(empty_positions)
-            position = [int(c) for c in position] # Numpy integers are annoying
-            return tuple(position)
+        empty_positions = np.argwhere(self.grid == grid_codes['empty'])
+        if empty_positions.size == 0:
+            raise ValueError("No empty positions available in the grid.")
+        position = random.choice(empty_positions)
+        position = [int(c) for c in position] # Numpy integers are annoying, cast to int
+        return tuple(position)
 
     def grid_is_free(self, x, y):
         """Try to move robot to new position. Return success/failure."""

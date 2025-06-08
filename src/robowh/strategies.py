@@ -50,7 +50,7 @@ class AStarStrategy(MoveStrategy):
     @classmethod
     def calculate_path(cls, current_pos, target_pos, n_steps=0):
         universe = Universe.get_universe()
-        grid = universe.grid  # Get environment from singleton
+        grid = universe.grid.copy()  # Get environment from singleton
 
         # Input validation
         if not cls._valid_pos(grid, current_pos):

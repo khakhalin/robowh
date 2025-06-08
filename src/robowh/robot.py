@@ -23,7 +23,7 @@ class Robot:
         self.origin = None
         self.destination = None
         self.action_stack = []  # A stack of actions into which tasks are broken down
-        self.current_action = None  # Possible actions: 'go', 'pick', 'drop'
+        self.current_action = None  # A tuple (action, target). actions: 'go', 'pick', 'drop'
         self.state = 'idling'  # idling, moving, blocked, loading etc. (TODO: full ontology)
         self.next_moves = []  # Placeholder for a sequence of steps in the queue
 
@@ -48,19 +48,24 @@ class Robot:
     def act(self) -> None:
         """Perform an action for this turn, whatever it is."""
         # Pseudocode:
-        # 1. Check if we are in a no action state. If no action pop(0) from the action stack
+        # 1. Check if we are in a no action state. If no action, pop(0) from the action stack
         # 2. If we have an ongoing action, perform this action
         # 3. Otherwise, idle
         if not self.current_action:
             if len(self.action_stack)>0:
                 self.current_action = self.action_stack.pop(0)
             else: # We can only idle
-                self.state = 'idle'
                 logger.debug(f"{self.name} ran out of actions and switched to idling")
+                self._report_for_service()
                 return
 
         if self.current_action[0] == 'go':
-            self.move()
+            target = self.current_action[1]
+            if (self.x==target[0]) & (self.y==target[1]): #  We are at destination
+                self.current_action = None
+                logger.debug(f"{self.name} Arrived at destination")
+            else:
+                self.move()
         else:
             raise ValueError(f"Action {self.current_action} is not implemented")
 
@@ -72,13 +77,18 @@ class Robot:
             self.next_moves = self.strategy.calculate_path(
                 (self.x, self.y), self.current_action[1], n_steps=10
                 )
-            # TODO: Here I requested a default number of steps, which is dangerous.
+            # TODO: Here we request some default number of steps, which may be dangerous.
+
+        if len(self.next_moves) ==0: # Calculation failed
+            self.universe.grid[self.x, self.y] = grid_codes['confused']
+            self.state = 'blocked'
+            return
 
         movement = self.next_moves.pop(0)  # Next element (reading L to R)
         new_x = self.x + movement[0]
         new_y = self.y + movement[1]
 
-        # Check for collisions and move if possible.
+        # Check for collisions and whether the move is possible.
         # Technically reaching into the grid directly from the robot is a very questionable
         # design choice, but let's consider it a case of bare-bones "observer pattern";
         # we're just communicating the change to the universe. Maybe we'll refactor it to
