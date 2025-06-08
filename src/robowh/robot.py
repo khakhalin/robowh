@@ -10,8 +10,6 @@ from robowh.universe import Universe
 from robowh.utils import grid_codes
 from robowh.strategies import MoveStrategy
 
-universe = Universe.get_universe()
-
 class Robot:
     """A robot in the universe."""
 
@@ -29,7 +27,8 @@ class Robot:
         self.state = 'idling'  # idling, moving, blocked, loading etc. (TODO: full ontology)
         self.next_moves = []  # Placeholder for a sequence of steps in the queue
 
-        self._set_position(universe.random_empty_position())  # Teleport
+        self.universe = Universe.get_universe()
+        self._set_position(self.universe.random_empty_position())  # Teleport
         self._report_for_service()
 
 
@@ -38,13 +37,13 @@ class Robot:
         if not isinstance(position, tuple) or len(position) != 2:
             raise ValueError("Position must be a tuple of (x, y) coordinates.")
         self.x, self.y = position
-        universe.grid[self.x, self.y] = grid_codes['robot']
+        self.universe.grid[self.x, self.y] = grid_codes['robot']
         logger.debug(f"{self.name} teleported to ({self.x}, {self.y})")
 
 
     def _report_for_service(self) -> None:
         """Robot finished a task and is ready to pick up a new one, or become idle."""
-        universe.orchestrator.process_request_for_service(self)
+        self.universe.orchestrator.process_request_for_service(self)
 
     def act(self) -> None:
         """Perform an action for this turn, whatever it is."""
@@ -84,13 +83,13 @@ class Robot:
         # design choice, but let's consider it a case of bare-bones "observer pattern";
         # we're just communicating the change to the universe. Maybe we'll refactor it to
         # something slightly more elegant later.
-        if universe.grid_is_free(new_x, new_y):  # Can move
-            universe.grid[self.x, self.y] = grid_codes['empty']
+        if self.universe.grid_is_free(new_x, new_y):  # Can move
+            self.universe.grid[self.x, self.y] = grid_codes['empty']
             self.x, self.y = new_x, new_y
-            universe.grid[self.x, self.y] = grid_codes['robot']
+            self.universe.grid[self.x, self.y] = grid_codes['robot']
             self.state = 'moving'
         else:  # Cannot move, think
-            universe.grid[self.x, self.y] = grid_codes['confused']
+            self.universe.grid[self.x, self.y] = grid_codes['confused']
             # logger.debug(f"{self.name} stumbled at ({self.x}, {self.y})")
             self.state = 'blocked'
             # Depending on the strategy, it could be a good point to replan from scratch.

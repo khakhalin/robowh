@@ -49,11 +49,7 @@ One weird semantic issue is that movements of robots may happen at several diffe
 * Finally, elementary moves we'll call `move`
 
 TODO:
-* Make robots register as idle at creation
-* Rework move to work from actions, not just to 0,0
-* Hint-typing for strategies as a parameter, in robots?
-* Make "confused" element in UI actually report the number of confused robots
-* Universe should call `act` not `move`. Then the robots should figure out if they move or not
+* Add a more reasonable pathfinding algo
 * Add handling of `idle` task
 * Count the number of robots that are currently idling, show in the UI
 * Add rack functionality (registrer places, with addresses, track inventory)
@@ -62,6 +58,7 @@ TODO:
 * Full task creation for incoming loads
 * Make the button "add 20 more loads" work
 * Full task creation for outgoing loads
+* Make "confused" element in UI actually report the number of confused robots
 
 Nice to haves:
 * The handling of sigletons is still a bit awkward: Universe is the only true singleton, and it creates others, except for the viewer, that is created in the main script. But also, to most (except for robots), universe is passed as a parameter, while for robots we break circular references using a deferred import (ugly). How to best standardize this? Should we always pass a reference to the universe explicitly at object creation, or is there a better way?

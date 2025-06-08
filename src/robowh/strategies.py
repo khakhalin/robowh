@@ -1,8 +1,13 @@
 """Pathfinding strategies for robots."""
 
+import heapq
+import numpy as np
+import random
+
 from abc import ABC, abstractmethod
 from typing import List, Tuple
-import random
+
+from robowh.universe import Universe
 
 class StrategyLibary():
     """An instance of this class contains each strategy, as a class."""
@@ -29,7 +34,7 @@ class MoveStrategy(ABC):
 
 class RandomMovementStrategy(MoveStrategy):
     @classmethod
-    def calculate_path(cls,current_pos, target_pos, n_steps=1):
+    def calculate_path(cls, current_pos, target_pos, n_steps=1):
         # Random wiggling in place
         plan = []
         for i in range(n_steps):
@@ -42,5 +47,5 @@ class RandomMovementStrategy(MoveStrategy):
 class AStarStrategy(MoveStrategy):
     @classmethod
     def calculate_path(cls, current_pos, target_pos, n_steps=0):
+        universe = Universe.get_universe()
         return [(0,0), (1,1)]  # Stub
-
