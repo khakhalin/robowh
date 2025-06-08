@@ -11,6 +11,7 @@ import threading
 from robowh.utils import grid_codes
 from robowh.strategies import StrategyLibary
 from robowh.scheduler import Scheduler
+from robowh.orchestrator import Orchestrator
 
 class Universe:
     """A singleton Universe object."""
@@ -40,6 +41,7 @@ class Universe:
         # Connect global objects here
         self.strategy_library = StrategyLibary()
         self.scheduler = Scheduler(self)
+        self.orchestrator = Orchestrator(self)
 
         # Create the structure of the WH
         self.grid = self.create_racks()

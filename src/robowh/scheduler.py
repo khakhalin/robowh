@@ -20,6 +20,9 @@ class Scheduler:
     def pop_order(self):
         """Pop an order from the task queue."""
         # Pseudocode for now:
+        # 0. Toss a coin, and with some probability, return None. If this method is modeling
+        #    getting an oder from a queue, then sometimes the queue should be empty, and
+        #    robots requesting an task should receive no task, and get into idling.
         # 1. Check inventory with Scheduler, compare to target inventory. If a gap, only
         #   create orders of one type (store or retrieve) for a while (until the gap is closed).
         # 2. If no gap, toss a coin if it's a "store" or "retrieve" order
