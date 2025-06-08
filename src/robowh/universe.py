@@ -9,9 +9,6 @@ import time
 import threading
 
 from robowh.utils import grid_codes
-from robowh.strategies import StrategyLibary
-from robowh.scheduler import Scheduler
-from robowh.orchestrator import Orchestrator
 
 class Universe:
     """A singleton Universe object."""
@@ -30,13 +27,19 @@ class Universe:
 
     # TODO: Move these constants to some config file
     MAX_UPDATE_TIME = 0.1  # 10 ms
-    GRID_SIZE = 100
-    N_ROBOTS = 70
-    RACK_SPACING = 15
+    GRID_SIZE = 33
+    N_ROBOTS = 3
+    RACK_SPACING = 7
 
     def _init(self):
         logger.info("Spawning a new universe (but not starting it yet)")
         self.lock = threading.Lock()
+
+        # Ugly deferred imports to avoid circular dependencies
+        from robowh.robot import Robot  # Deferred import to avoid circular dependency
+        from robowh.strategies import StrategyLibary
+        from robowh.scheduler import Scheduler
+        from robowh.orchestrator import Orchestrator
 
         # Connect global objects here
         self.strategy_library = StrategyLibary()
@@ -48,7 +51,6 @@ class Universe:
 
         # Robots
         self.robots = []
-        from robowh.robot import Robot  # Deferred import to avoid circular dependency
         for i in range(self.N_ROBOTS):
             robot = Robot(
                 name=f"Robot_{i+1}",
@@ -75,7 +77,7 @@ class Universe:
 
     def start_universe(self):
         """Starting the universe."""
-        logger.info("Starting the time in the universe!")
+        logger.info("Big bang: kicking-off timeline in the universe!")
         def update_universe():
             while True:
                 start_time = time.time()

@@ -7,6 +7,7 @@ class ColorFormatter(logging.Formatter):
     BLUE = '\033[94m'
     YELLOW = '\033[93m'
     RED = '\033[91m'
+    PALEGRAY = '\033[38;5;245m'
     RESET = '\033[0m'
 
     def format(self, record):
@@ -18,6 +19,8 @@ class ColorFormatter(logging.Formatter):
         elif levelname == 'ERROR':
             record.levelname = f'{self.RED}{levelname}{self.RESET}'
         # DEBUG: no color
+        funcName = record.funcName
+        record.funcName = f'{self.PALEGRAY}{funcName}{self.RESET}'
         return super().format(record)
 
 # A dictionary of codes used to represent the WH on a grid.

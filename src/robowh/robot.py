@@ -8,13 +8,14 @@ import random
 
 from robowh.universe import Universe
 from robowh.utils import grid_codes
+from robowh.strategies import MoveStrategy
 
 universe = Universe.get_universe()
 
 class Robot:
     """A robot in the universe."""
 
-    def __init__(self, name:str, strategy):
+    def __init__(self, name:str, strategy: MoveStrategy):
         logger.debug(f"Spawning a new robot: {name}")
         self.name = name
         self.strategy = strategy
@@ -30,6 +31,7 @@ class Robot:
 
         self._set_position(universe.random_empty_position())
 
+
     def _set_position(self, position: tuple):
         """Set the robot's position in the universe. Teleportation."""
         if not isinstance(position, tuple) or len(position) != 2:
@@ -37,6 +39,7 @@ class Robot:
         self.x, self.y = position
         universe.grid[self.x, self.y] = grid_codes['robot']
         logger.debug(f"Robot {self.name} teleported to ({self.x}, {self.y})")
+
 
     def move(self) -> None:
         """Request a random move."""

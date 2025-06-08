@@ -3,17 +3,22 @@
 import logging
 logger = logging.getLogger(__name__)
 
+from typing import TYPE_CHECKING
 import random
+
+from robowh.robot import Robot
+from robowh.universe import Universe
+
 
 class Orchestrator:
     """The Orchestrator is the main controller of the Robotic Warehouse Simulator."""
 
-    def __init__(self, universe):
+    def __init__(self, universe: Universe):
         logger.info("Starting the Orchestrator")
         self.universe = universe
         self.idle_robots = []  # A list of idling robots (not IDs, but object references)
 
-    def request_new_orders(self, robot):
+    def request_new_orders(self, robot: Robot):
         """A robot has become idle and is asking for a new job."""
         logger.info(f"Robot {robot.name} is requesting a new task.")
         # Pseudocode:
