@@ -53,7 +53,7 @@ class Universe:
         self.robots = []
         for i in range(self.N_ROBOTS):
             robot = Robot(
-                name=f"Robot_{i+1}",
+                name=f"R{i+1:03d}",
                 strategy=self.strategy_library.random
                 )
             self.robots.append(robot)
@@ -92,7 +92,7 @@ class Universe:
                     if time.time() - start_time < self.MAX_UPDATE_TIME:
                         robot = self.robots[i]
                         with self.lock:
-                            robot.move()
+                            robot.act()
 
                 elapsed_time = time.time() - start_time
                 sleep_time = max(0, self.MAX_UPDATE_TIME - elapsed_time)
@@ -108,6 +108,7 @@ class Universe:
             if empty_positions.size == 0:
                 raise ValueError("No empty positions available in the grid.")
             position = random.choice(empty_positions)
+            position = [int(c) for c in position] # Numpy integers are annoying
             return tuple(position)
 
     def grid_is_free(self, x, y):

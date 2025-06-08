@@ -25,20 +25,45 @@ class Robot:
         self.origin = None
         self.destination = None
         self.action_stack = []  # A stack of actions into which tasks are broken down
-        self.substate = 'moving'  # moving, confused, loading - related to subtasks
-
+        self.current_action = None  # Possible actions: 'go', 'pick', 'drop'
+        self.state = 'idling'  # idling, moving, blocked, loading etc. (TODO: full ontology)
         self.next_moves = []  # Placeholder for a sequence of steps in the queue
 
-        self._set_position(universe.random_empty_position())
+        self._set_position(universe.random_empty_position())  # Teleport
+        self._report_for_service()
 
 
-    def _set_position(self, position: tuple):
+    def _set_position(self, position: tuple) -> None:
         """Set the robot's position in the universe. Teleportation."""
         if not isinstance(position, tuple) or len(position) != 2:
             raise ValueError("Position must be a tuple of (x, y) coordinates.")
         self.x, self.y = position
         universe.grid[self.x, self.y] = grid_codes['robot']
-        logger.debug(f"Robot {self.name} teleported to ({self.x}, {self.y})")
+        logger.debug(f"{self.name} teleported to ({self.x}, {self.y})")
+
+
+    def _report_for_service(self) -> None:
+        """Robot finished a task and is ready to pick up a new one, or become idle."""
+        universe.orchestrator.process_request_for_service(self)
+
+    def act(self) -> None:
+        """Perform an action for this turn, whatever it is."""
+        # Pseudocode:
+        # 1. Check if we are in a no action state. If no action pop(0) from the action stack
+        # 2. If we have an ongoing action, perform this action
+        # 3. Otherwise, idle
+        if not self.current_action:
+            if len(self.action_stack)>0:
+                self.current_action = self.action_stack.pop(0)
+            else: # We can only idle
+                self.state = 'idle'
+                logger.debug(f"{self.name} ran out of actions and switched to idling")
+                return
+
+        if self.current_action[0] == 'go':
+            self.move()
+        else:
+            raise ValueError(f"Action {self.current_action} is not implemented")
 
 
     def move(self) -> None:
@@ -46,7 +71,7 @@ class Robot:
         # Check if we are out of ideas for next moves, in which case, think
         if len(self.next_moves) == 0:
             self.next_moves = self.strategy.calculate_path(
-                (self.x, self.y), (0,0), n_steps=10
+                (self.x, self.y), self.current_action[1], n_steps=10
                 )
             # TODO: Here I requested a default number of steps, which is dangerous.
 
@@ -63,10 +88,11 @@ class Robot:
             universe.grid[self.x, self.y] = grid_codes['empty']
             self.x, self.y = new_x, new_y
             universe.grid[self.x, self.y] = grid_codes['robot']
-            self.substate = 'moving'
+            self.state = 'moving'
         else:  # Cannot move, think
             universe.grid[self.x, self.y] = grid_codes['confused']
-            self.substate = 'confused'
+            # logger.debug(f"{self.name} stumbled at ({self.x}, {self.y})")
+            self.state = 'blocked'
             # Depending on the strategy, it could be a good point to replan from scratch.
             # TODO: introduce some flexibility here. Always replan? Sometimes replan?
 
@@ -79,8 +105,8 @@ class Robot:
         - 'transfer': A sequence of actions: go, pick, go, drop
         - 'idle': No task, do nothing in place
         """
-        logger.info(f"Robot {self.name} assigned task: {task_type} from {origin} to {destination}")
         if task_type=="reposition":
+            logger.info(f"{self.name} asked to reposition to {destination}")
             if destination is None:
                 raise ValueError("Reposition task must have a destination.")
             origin = (self.x, self.y) if origin is None else origin
@@ -98,5 +124,5 @@ class Robot:
         """Add an action to the queue of actions."""
         if action not in ["go", "pick", "drop"]:
             raise ValueError(f"Unknown action: {action}. Supported: 'go', 'pick', 'drop'.")
-        self.action_stack.insert(0, (action, target))
-        logger.debug(f"Robot {self.name} assigned action: {action} to {target}")
+        logger.debug(f"{self.name} assigned action: {action} to {target}")
+        self.action_stack.append((action, target))

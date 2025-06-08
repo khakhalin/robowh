@@ -49,7 +49,6 @@ One weird semantic issue is that movements of robots may happen at several diffe
 * Finally, elementary moves we'll call `move`
 
 TODO:
-* Make scheduling and orchestration events to logger info
 * Make robots register as idle at creation
 * Rework move to work from actions, not just to 0,0
 * Hint-typing for strategies as a parameter, in robots?

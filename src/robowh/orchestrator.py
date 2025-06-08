@@ -18,9 +18,9 @@ class Orchestrator:
         self.universe = universe
         self.idle_robots = []  # A list of idling robots (not IDs, but object references)
 
-    def request_new_orders(self, robot: Robot):
+    def process_request_for_service(self, robot: Robot):
         """A robot has become idle and is asking for a new job."""
-        logger.info(f"Robot {robot.name} is requesting a new task.")
+        logger.info(f"{robot.name} requesting a new task")
         # Pseudocode:
         # 1. Check with the Scheduler if there are orders in the queue.
         #   If there's an order, assign it to the robot.
@@ -36,11 +36,14 @@ class Orchestrator:
         robot.assign_task("reposition", origin=None, destination=random_position)
         return
 
-        # This part is currently unreachable, as we give tasks to all robots
+        # This part is currently unreachable, as for now we immediately give tasks to all robots
+        # But once we move to actual operations, we'll start coin-tossing in scheduler, and then
+        # some robots will become idle.
         if robot not in self.idle_robots:
+            logger.info(f"{robot.name} is set to idle")
             self.idle_robots.append(robot)
-            logger.info(f"Registered idle robot: {robot.name}")
             return
+
 
     def find_idle_robot(self):
         """Find one idle robot from the stack."""

@@ -12,14 +12,18 @@ class ColorFormatter(logging.Formatter):
 
     def format(self, record):
         levelname = record.levelname
+        padded_name = f"{levelname:<5}"  # Left aligned, padded to 8 chars
         if levelname == 'INFO':
-            record.levelname = f'{self.BLUE}{levelname}{self.RESET}'
+            record.levelname = f'{self.BLUE}{padded_name}{self.RESET}'
         elif levelname == 'WARNING':
-            record.levelname = f'{self.YELLOW}{levelname}{self.RESET}'
+            record.levelname = f'{self.YELLOW}{padded_name}{self.RESET}'
         elif levelname == 'ERROR':
-            record.levelname = f'{self.RED}{levelname}{self.RESET}'
-        # DEBUG: no color
+            record.levelname = f'{self.RED}{padded_name}{self.RESET}'
+        elif levelname == 'DEBUG':
+            record.levelname = f'{padded_name}' # No color change
+
         funcName = record.funcName
+        funcName = f"{funcName:<12.12}"
         record.funcName = f'{self.PALEGRAY}{funcName}{self.RESET}'
         return super().format(record)
 
