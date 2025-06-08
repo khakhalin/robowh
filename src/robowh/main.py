@@ -9,7 +9,7 @@ formatter = ColorFormatter(
 hnd = logging.StreamHandler(stream=sys.stdout)
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 ch.setFormatter(formatter)

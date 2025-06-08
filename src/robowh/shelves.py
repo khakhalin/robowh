@@ -10,7 +10,6 @@ import uuid
 
 from robowh.universe import Universe
 from robowh.utils import grid_codes
-from robowh.strategies import MoveStrategy
 
 
 class Shelves():

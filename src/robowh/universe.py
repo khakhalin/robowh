@@ -27,7 +27,7 @@ class Universe:
 
     # TODO: Move these constants to some config file
     MAX_UPDATE_TIME = 0.1  # 10 ms
-    GRID_SIZE = 33
+    GRID_SIZE = 30
     N_ROBOTS = 3
     RACK_SPACING = 7
 
@@ -40,6 +40,7 @@ class Universe:
         from robowh.strategies import StrategyLibary
         from robowh.scheduler import Scheduler
         from robowh.orchestrator import Orchestrator
+        from robowh.shelves import Shelves
 
         # Connect global objects here
         self.strategy_library = StrategyLibary()
@@ -47,7 +48,9 @@ class Universe:
         self.orchestrator = Orchestrator(self)
 
         # Create the structure of the WH
-        self.grid = self.create_racks()
+        self.grid = np.full((self.GRID_SIZE, self.GRID_SIZE), grid_codes['empty'], dtype=int)
+        self.shelves = Shelves("racks")
+        self.setup_shelves()
 
         # Robots
         self.robots = []
@@ -62,18 +65,18 @@ class Universe:
         self.diagnostic_number = 0.0  # A toy example for now
 
 
-    def create_racks(self):
+    def setup_shelves(self):
         """Create a grid with empty positions and racks."""
         logger.info("Creating the grid of racks")
-        grid = np.full((self.GRID_SIZE, self.GRID_SIZE), grid_codes['empty'], dtype=int)
-
         # Set up racks as vertical lines padded by empty spaces, and equally spaced.
         # We have some magic numbers here, to make the picture prettier. Sorry!
-        for j in range(self.RACK_SPACING, self.GRID_SIZE, self.RACK_SPACING):
-            if j + 1 < self.GRID_SIZE:
-                for i in range(self.RACK_SPACING*2, self.GRID_SIZE - self.RACK_SPACING):
-                    grid[i, j] = grid_codes['shelf']
-        return grid
+        gap = self.RACK_SPACING // 2
+        for j in range(gap, self.GRID_SIZE, self.RACK_SPACING):
+            if j < self.GRID_SIZE-gap:
+                for i in range(self.RACK_SPACING + gap, self.GRID_SIZE - gap):
+                    self.shelves.add_shelf((i, j))
+                    self.shelves.add_shelf((i, j+1))
+
 
     def start_universe(self):
         """Starting the universe."""
