@@ -4,15 +4,9 @@ This is a draft of a robotic warehouse simulator.
 
 # The idea
 
-We want to have a simulated robotis warehouse to be able to compare different kinds of pathfinding
-algorithms for robots working in this warehouse. We'll have one type of a robot, occupying
-one pixel on a square grid. These robots will be able to move around, carry things, and also
-pick them up and store them in both loading/unloading bays and warehouse racks.
+We want to have a simulated robotic warehouse to be able to compare different kinds of pathfinding algorithms for robots working in this warehouse. We have one type of a robot, occupying one pixel on a square grid. These robots can to move around, carry items, and pick and store in both loading/unloading bays and warehouse racks.
 
-The trick of this sketch is that we want be half-way between a more-or-less realistic system design
-(with microservices, independent robots, asynchronous communications via a message queue etc.) and
-an efficient simulation environment. We also want to be able to run different types of tests,
-and compare different types of pathfinding approaches. So we'll aim for something in-between:
+The trick of this sketch is that we want to be half-way between a more-or-less realistic system design (with microservices, independent robots, asynchronous communications via message queues and stacks etc.) and a (relatively) efficient simulation environment. We also want to be able to run tests, and compare different pathfinding approaches. So we'll aim for something in-between:
 some aspects of the system will be radically simplified (like for example, that robots are just
 pixels on a grid), while others may look slightly overengineered.
 
@@ -27,9 +21,9 @@ To mess with the stuff, clone and install it as a package with `pip install -e .
 The system consists of several units:
 1. **GUI** - a front-end, vibe-coded in JS, talking to a flask backend
 2. **View** - a flask backend responding to requests from the Visualizer
-3. **Universe** - mostly a time-engine. IRL robots would move around on their own and communicate with the orchestrator asynchronously. In this model we have a singleton Physics engine that nudges other players one by one, allowing them to perform certan actions. It's not true concurrency, but for this purpose it's good enough. In practice will work with turns (time ticks), and each turn will take a certain amount of time. During a turn, robots will be given priority in random order. If all of them manage to get processed, great! If not, the turn will be over, and the priority will be passed to system operations (Observer, Scheduler), until a new turn is started.
+3. **Universe** - mostly a time-engine. IRL robots would move around on their own and communicate with the orchestrator asynchronously. In this model we have a singleton Universe engine that nudges other players (both microservices and robots) one by one, allowing them to perform certan actions. It's not true concurrency, but for this purpose it's good enough. In practice we will work with turns (time ticks), and each turn will take a fixed amount of time. During a turn, robots will be given priority in random order. If all of them manage to get processed, great! If not, the turn will be over, and the priority will be passed to system operations (Observer, Scheduler), until a new turn is started.
 4. **Orchestrator** - the main logic of the warehouse: receiving orders from scheduler, assigning storage positions to incoming loads, remembering positions of stored goods, assigning tasks to robots.
-5. **Robots** - each robot is an object that interfaces with Physics (on movement and other robot-driven actions) and with the Orchestrator (getting tasks from it, and reporting back)
+5. **Robots** - each robot is an object that interfaces with Universe (on movement and other robot-driven actions) and with the Orchestrator (getting tasks from it, and reporting back)
 6. **Strategies** - abstracted pathfinding methods that for a given start and end points calculate a given number of steps in the direction of this point
 6. **Observer** - collects diagnostic information about the state of the system
 7. **Scheduler** - creates tasks for robots; acts as a (fake) external interface of the warehouse
@@ -49,14 +43,15 @@ One weird semantic issue is that movements of robots may happen at several diffe
 * Finally, elementary moves we'll call `move`
 
 TODO:
+* Count the number of robots that were processed (didn't time out), show it in the console
 * Add rack functionality (registrer places, with addresses, track inventory)
 * Add target address functionality for incoming loads
 * Add loading bay functionality
 * Full task creation for incoming loads
-* Add handling of `idle` task
-* Count the number of robots that are currently idling, show in the UI
-* Make the button "add 20 more loads" work
 * Full task creation for outgoing loads
+* Add handling of `idle` task
+* Make the button "add 20 more loads" work
+* Measure and report confusins and blockage for robots
 * Improve unit test for robots, as towards the end it seems to be making strange assumptions
 * Make "confused" element in UI actually report the number of confused robots
 

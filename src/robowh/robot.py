@@ -55,7 +55,6 @@ class Robot:
             if len(self.action_stack)>0:
                 self.current_action = self.action_stack.pop(0)
             else: # We can only idle
-                logger.debug(f"{self.name} ran out of actions and switched to idling")
                 self._report_for_service()
                 return
 
@@ -74,10 +73,10 @@ class Robot:
         """Request a random move."""
         # Check if we are out of ideas for next moves, in which case, think
         if len(self.next_moves) == 0:
+            logger.debug(f"{self.name} recalculating path (at {self.x}, {self.y})")
             self.next_moves = self.strategy.calculate_path(
-                (self.x, self.y), self.current_action[1], n_steps=10
+                (self.x, self.y), self.current_action[1]
                 )
-            # TODO: Here we request some default number of steps, which may be dangerous.
 
         if len(self.next_moves) ==0: # Calculation failed
             self.universe.grid[self.x, self.y] = grid_codes['confused']
@@ -115,10 +114,10 @@ class Robot:
         - 'idle': No task, do nothing in place
         """
         if task_type=="reposition":
-            logger.info(f"{self.name} asked to reposition to {destination}")
+            origin = (self.x, self.y) if origin is None else origin
+            logger.info(f"{self.name} asked to reposition from {origin} to {destination}")
             if destination is None:
                 raise ValueError("Reposition task must have a destination.")
-            origin = (self.x, self.y) if origin is None else origin
             self._assign_action("go", destination)
         else:
             raise ValueError(f"Unknown task type: {task_type}. Supported: 'reposition'.")
