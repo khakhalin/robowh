@@ -58,6 +58,7 @@ TODO:
 * Full task creation for incoming loads
 * Make the button "add 20 more loads" work
 * Full task creation for outgoing loads
+* Improve unit test for robots, as towards the end it seems to be making strange assumptions
 * Make "confused" element in UI actually report the number of confused robots
 
 Nice to haves:
