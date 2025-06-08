@@ -83,4 +83,4 @@ class AStarStrategy(MoveStrategy):
         y, x = pos
         return (0 <= y < grid.shape[0] and
                 0 <= x < grid.shape[1] and
-                grid[y, x] != grid_codes['rack'])  # Racks are not valid positions
+                grid[y, x] != grid_codes['shelf'])  # Racks are not valid positions

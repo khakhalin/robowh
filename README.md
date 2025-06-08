@@ -1,4 +1,4 @@
-# Robotic Warehouse (a sketch)
+# Robotic Warehouse: a sketch
 
 This is a draft of a robotic warehouse simulator.
 
@@ -42,16 +42,20 @@ One weird semantic issue is that movements of robots may happen at several diffe
 * A sequence of next elementary steps we'll call `next_moves`
 * Finally, elementary moves we'll call `move`
 
+# Next steps
+
 TODO:
+* Occupied shelves should also count as occupied pixels for a-star purposes.
 * Count the number of robots that were processed (didn't time out), show it in the console
 * Add rack functionality (registrer places, with addresses, track inventory)
+* Start with half of racks occupied
 * Add target address functionality for incoming loads
 * Add loading bay functionality
 * Full task creation for incoming loads
 * Full task creation for outgoing loads
-* Add handling of `idle` task
-* Make the button "add 20 more loads" work
-* Measure and report confusins and blockage for robots
+* Add n tasks processed per second
+* Measure and report confusins and blockage for robots, percent of time blocked
+* Add buttons for adding robots and removing robots
 * Improve unit test for robots, as towards the end it seems to be making strange assumptions
 * Make "confused" element in UI actually report the number of confused robots
 

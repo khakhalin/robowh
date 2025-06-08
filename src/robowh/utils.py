@@ -31,9 +31,9 @@ class ColorFormatter(logging.Formatter):
 # To change the colors for these, you'll need to go to the UI html and change them there.
 grid_codes = {
     'empty':0,
-    'rack':1,
+    'shelf':1,
     'robot':2,
     'operation':3,
     'confused':4,
-    'payload':5
+    'item':5
 }

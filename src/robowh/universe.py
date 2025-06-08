@@ -28,7 +28,7 @@ class Universe:
     # TODO: Move these constants to some config file
     MAX_UPDATE_TIME = 0.1  # 10 ms
     GRID_SIZE = 33
-    N_ROBOTS = 13
+    N_ROBOTS = 3
     RACK_SPACING = 7
 
     def _init(self):
@@ -72,7 +72,7 @@ class Universe:
         for j in range(self.RACK_SPACING, self.GRID_SIZE, self.RACK_SPACING):
             if j + 1 < self.GRID_SIZE:
                 for i in range(self.RACK_SPACING*2, self.GRID_SIZE - self.RACK_SPACING):
-                    grid[i, j] = grid_codes['rack']
+                    grid[i, j] = grid_codes['shelf']
         return grid
 
     def start_universe(self):
