@@ -60,7 +60,7 @@ class Robot:
 
         if self.current_action[0] == 'go':
             target = self.current_action[1]
-            if (self.x==target[0]) & (self.y==target[1]): #  We are at destination
+            if abs(self.x-target[0]) + abs(self.y-target[1]) <= 1: #  We are at destination
                 self.current_action = None
                 logger.debug(f"{self.name} Arrived at destination")
             else:
@@ -70,7 +70,7 @@ class Robot:
 
 
     def move(self) -> None:
-        """Request a random move."""
+        """Perform a single one-pixel move (if possible)."""
         # Check if we are out of ideas for next moves, in which case, think
         if len(self.next_moves) == 0:
             logger.debug(f"{self.name} recalculating path (at {self.x}, {self.y})")
@@ -78,7 +78,7 @@ class Robot:
                 (self.x, self.y), self.current_action[1]
                 )
 
-        if len(self.next_moves) ==0: # Calculation failed
+        if len(self.next_moves) ==0: # If it's still zero, then the calculation above failed
             self.universe.grid[self.x, self.y] = grid_codes['confused']
             self.state = 'blocked'
             return

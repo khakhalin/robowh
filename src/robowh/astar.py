@@ -18,7 +18,7 @@ class Node:
         return self.f < other.f
 
 
-def find_path(grid, start, goal):
+def find_path(grid, start, goal, until_touch=True):
     """Core A* implementation returning list of positions (empty if no path)."""
     open_heap = []
     closed_set = set()
@@ -38,6 +38,11 @@ def find_path(grid, start, goal):
             x = current_node.position[1] + dx
             neighbor_pos = (y, x)
 
+            # If going to a rack, we want to stop one pixels before it
+            if until_touch and (neighbor_pos == goal):
+                return _reconstruct_path(current_node)
+
+            # We cannot walk through occupied pixels though
             if not _valid_pos(grid, neighbor_pos):
                 continue
 
@@ -62,7 +67,7 @@ def _heuristic(pos, target):
     return abs(pos[0] - target[0]) + abs(pos[1] - target[1])
 
 def _valid_pos(grid, pos):
-    """This position is not taken by a rack."""
+    """This position is free to move through."""
     y, x = pos
     return (0 <= y < grid.shape[0] and
             0 <= x < grid.shape[1] and

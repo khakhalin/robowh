@@ -51,6 +51,8 @@ class Universe:
         self.grid = np.full((self.GRID_SIZE, self.GRID_SIZE), grid_codes['empty'], dtype=int)
         self.shelves = Shelves("racks")
         self.setup_shelves()
+        self.bays = Shelves("bays", deep=True)
+        self.setup_loading_bays()
 
         # Robots
         self.robots = []
@@ -66,7 +68,7 @@ class Universe:
 
 
     def setup_shelves(self):
-        """Create a grid with empty positions and racks."""
+        """Create a grid of storage racks."""
         logger.info("Creating the grid of racks")
         # Set up racks as vertical lines padded by empty spaces, and equally spaced.
         # We have some magic numbers here, to make the picture prettier. Sorry!
@@ -76,6 +78,18 @@ class Universe:
                 for i in range(self.RACK_SPACING + gap, self.GRID_SIZE - gap):
                     self.shelves.add_shelf((i, j))
                     self.shelves.add_shelf((i, j+1))
+
+        # Remember current stock, and make the orchestrator try to maintain it
+        self.orchestrator.target_inventory = self.shelves.n_items
+
+
+    def setup_loading_bays(self):
+        """Create a line of loading bays."""
+        logger.info("Creating the grid of loading bays")
+        gap = self.RACK_SPACING // 2
+        for j in range(gap, self.GRID_SIZE, gap):
+            if j < self.GRID_SIZE-gap*0.7:
+                self.bays.add_shelf((0, j), empty=True)
 
 
     def start_universe(self):

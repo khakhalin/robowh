@@ -48,7 +48,12 @@ class RandomMovementStrategy(MoveStrategy):
 
 class AStarStrategy(MoveStrategy):
     @classmethod
-    def calculate_path(cls, current_pos, target_pos, n_steps=0):
+    def calculate_path(cls, current_pos, target_pos, n_steps=0, until_touch=True):
+        """Calculate a path from current to target, and return n_steps of it.
+
+        if until_touch, it's enough to reach a pixel near the target pixel. It's true by default,
+        to reach shelves and loading bays.
+        """
         universe = Universe.get_universe()
         grid = universe.grid.copy()  # Get environment from singleton
 
@@ -61,7 +66,7 @@ class AStarStrategy(MoveStrategy):
             return []
 
         # Get path from A* core
-        path = astar.find_path(grid, current_pos, target_pos)
+        path = astar.find_path(grid, current_pos, target_pos, until_touch)
         if len(path)==0: # Astar didn't find a path
             logger.warning(f"A-star could not find a path from {current_pos} to {target_pos}!")
 
