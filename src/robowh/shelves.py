@@ -6,7 +6,6 @@ logger = logging.getLogger(__name__)
 import numpy as np
 import random
 from typing import List, Tuple, Optional
-import uuid
 
 from robowh.universe import Universe
 from robowh.utils import grid_codes
@@ -17,11 +16,13 @@ class Shelves():
     def __init__(self, name=None, deep=False):
         logger.info("Shelves object created")
         self.name:Optional[str] = name
+        self.deep:bool = deep  # Deep shelves store more than one item in a cell
+
+        self.n_items:int = 0
         self.records:dict[str:int] = {}  # To search shelves by product
         self.coords:List[Tuple[int]] = []  # Coordinates of every shelf
         self.inventory:List[List[str]] = []  # What is stored in every shelf
-        self.n_items:int = 0
-        self.deep:bool = deep  # Deep shelves store more than one item in a cell
+        self.lock:list[bool] = []  # Cells are locked for placement and picking to avoid conflicts
 
         self.universe:Universe = Universe.get_universe()
 
@@ -42,8 +43,9 @@ class Shelves():
         # Create  shelf
         self.universe.grid[x, y] = grid_codes['shelf']
         self.inventory.append([])
+        self.lock.append(False)
         if not empty and np.random.uniform() > 0.5:
-            item_code = uuid.uuid4().hex[:8]  # Generate hex-based ID (32 characters)
+            item_code = self.universe.new_code()
             self.place_at(cell_id, item_code)
 
 
@@ -74,6 +76,7 @@ class Shelves():
         self.n_items += 1
         self.records[product] = index
         self.universe.grid[x,y] = grid_codes['item']
+        self.lock[index] = False
 
 
     def remove(self, index:int, product:str):
@@ -82,7 +85,7 @@ class Shelves():
         if index >= len(self.coords):
             raise ValueError(f"Index {index} out of bounds ({len(self.coords)}) for {self.name}")
         if not self.inventory[index]:  # Empty list
-            raise ValueError(f"Can't clear {index} at shelves {self.name}: it's empty.")
+            raise ValueError(f"Can't clear {product} from {self.name} #{index}: it's empty.")
         if product not in self.inventory[index]:
             raise ValueError(f"Can't find {product} in {index} of {self.name}")
 
@@ -96,6 +99,7 @@ class Shelves():
         del self.records[product]
         if not self.inventory[index]:  # The shelf is empty now
             self.universe.grid[x,y] = grid_codes['shelf']
+        self.lock[index] = False
 
 
     def place_optimally(self, product:str):
@@ -106,3 +110,13 @@ class Shelves():
         except ValueError:
             raise ValueError(f"The shelf {self.name} is full, cannot find an empty slot")
         self.place_at(index, product)
+
+
+    def pick_random_product_for_delivery(self):
+        """IRL it would not be a good method, but for us it's a substitute for realistic orders."""
+        products = [self.inventory[i] for i in range(len(self.inventory)) if not self.lock[i]]
+        products = [p for sublist in products for p in sublist]
+        if not products:
+            logger.warning(f"Requesting a random object off {self.name}, but the shelf is empty.")
+            return None
+        return random.choice(products)

@@ -41,7 +41,7 @@ def test_robot_initialization(robot: Robot) -> None:
     assert robot.y is not None
     assert 0 <= robot.x < robot.universe.grid.shape[0]
     assert 0 <= robot.y < robot.universe.grid.shape[1]
-    assert robot.task in ['idle', 'reposition']  # TODO: Make it idle immediately upon creation
+    assert robot.task == 'idle'
     assert robot.state == 'idling'
     assert isinstance(robot.next_moves, list)
 

@@ -7,6 +7,8 @@ import numpy as np
 import random
 import time
 import threading
+from typing import Tuple
+import uuid
 
 from robowh.utils import grid_codes
 
@@ -28,8 +30,9 @@ class Universe:
     # TODO: Move these constants to some config file
     MAX_UPDATE_TIME = 0.1  # 10 ms
     GRID_SIZE = 30
-    N_ROBOTS = 3
+    N_ROBOTS = 30
     RACK_SPACING = 7
+    BAY_SPACING = 5
 
     def _init(self):
         logger.info("Spawning a new universe (but not starting it yet)")
@@ -41,6 +44,9 @@ class Universe:
         from robowh.scheduler import Scheduler
         from robowh.orchestrator import Orchestrator
         from robowh.shelves import Shelves
+
+        # Global variables
+        self.list_of_all_products = set({})
 
         # Connect global objects here
         self.strategy_library = StrategyLibary()
@@ -86,9 +92,8 @@ class Universe:
     def setup_loading_bays(self):
         """Create a line of loading bays."""
         logger.info("Creating the grid of loading bays")
-        gap = self.RACK_SPACING // 2
-        for j in range(gap, self.GRID_SIZE, gap):
-            if j < self.GRID_SIZE-gap*0.7:
+        for j in range(self.BAY_SPACING, self.GRID_SIZE, self.BAY_SPACING):
+            if j < self.GRID_SIZE-self.BAY_SPACING*0.7:
                 self.bays.add_shelf((0, j), empty=True)
 
 
@@ -127,9 +132,29 @@ class Universe:
         position = [int(c) for c in position] # Numpy integers are annoying, cast to int
         return tuple(position)
 
-    def grid_is_free(self, x, y):
+    def grid_is_free(self, x:int, y:int) -> bool:
         """Try to move robot to new position. Return success/failure."""
         if (0 <= x < self.GRID_SIZE and 0 <= y < self.GRID_SIZE):
             if self.grid[x, y] == grid_codes['empty']:
                 return True
         return False
+
+    def scan(self, x:int, y:int, product:str) -> Tuple:
+        """Check if product is available at any rack immediately nearby."""
+        shelves = [self.bays, self.shelves]
+        for shelve in shelves:
+            try:
+                index = shelve.coords.index((x,y))
+                # .index is funny, instead of returning a None, it fails
+                return (shelve, index)
+            except Exception:
+                pass
+        return False
+
+    def new_code(self):
+        """Create a new code."""
+        while True:
+            product = uuid.uuid4().hex[:8]  # Generate hex-based ID (32 characters)
+            if product not in self.list_of_all_products:
+                self.list_of_all_products.add(product)
+                return product

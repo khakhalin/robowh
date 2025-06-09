@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from typing import TYPE_CHECKING
+import numpy as np
 import random
 
 from robowh.robot import Robot
@@ -27,12 +28,12 @@ class Orchestrator:
         # For now, let's just give them orders to move to random parts of the WH,
         # to test the movement logic.
 
-        self.create_delivery_task(robot)
+        success = self.create_delivery_task(robot)
 
         # This part is currently unreachable, as for now we immediately give tasks to all robots
         # But once we move to actual operations, we'll start coin-tossing in scheduler, and then
         # some robots will become idle.
-        if robot not in self.idle_robots:
+        if not success and (robot not in self.idle_robots):
             logger.info(f"{robot.name} is set to idle")
             self.idle_robots.append(robot)
             return
@@ -48,17 +49,31 @@ class Orchestrator:
         # 2. If no ready orders, we could consider moving the robot to a more advantagious position
         #   (e.g., closer to the docks, or to a more central position).
         # 3. If no need to move, register the robot as idle and wait for the next order.
-        if self.universe.shelves.n_items < self.target_inventory:
+
+        if False: # self.universe.shelves.n_items < self.target_inventory:
             # Create a storage order
             self.create_random_movement_task(robot)
         else:
             # Create a retrieval order
             # Pick
-            product = random.choice([k for k in self.universe.shelves.records.keys()])
+            product = self.universe.shelves.pick_random_product_for_delivery()
+            if product is None: # We failed to create an order
+                return False  # Set to idle
+
             shelf_id = self.universe.shelves.records[product]
             x,y = self.universe.shelves.coords[shelf_id]
-            logger.warning(f"{product}, {x}, {y}")
-            robot.assign_task("reposition", origin=None, destination=(x,y))
+
+            bay_id = np.random.randint(len(self.universe.bays.inventory))
+            bx,by = self.universe.bays.coords[bay_id]
+
+            robot.assign_task("transfer", origin=(x,y), destination=(bx,by), product=product)
+            self.universe.shelves.lock[shelf_id] = True
+            # We don't remove the product from loading bays afterwards,
+            # we let it stay there. It's obviously not what's happening to products IRL,
+            # but it's good enough for our purposes,  as we'll need to store something
+            # from the bays to the shelves at some later point anyways.
+
+        return True
 
 
     def create_random_movement_task(self, robot: Robot):

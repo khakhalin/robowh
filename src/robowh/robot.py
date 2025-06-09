@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import numpy as np
+from typing import List, Tuple
 import random
 
 from robowh.universe import Universe
@@ -15,21 +16,26 @@ class Robot:
 
     def __init__(self, name:str, strategy: MoveStrategy):
         logger.debug(f"Spawning a new robot: {name}")
-        self.name = name
-        self.strategy = strategy
-        self.x = None
-        self.y = None
-        self.task = 'idle' # idle, reposition, transfer
-        self.origin = None
-        self.destination = None
-        self.action_stack = []  # A stack of actions into which tasks are broken down
-        self.current_action = None  # A tuple (action, target). actions: 'go', 'pick', 'drop'
-        self.state = 'idling'  # idling, moving, blocked, loading etc. (TODO: full ontology)
-        self.next_moves = []  # Placeholder for a sequence of steps in the queue
+        self.name:str = name
+        self.strategy:MoveStrategy = strategy
+        self.x:int = None
+        self.y:int = None
+        self.task:str = 'idle' # idle, reposition, transfer
+        self.origin:Tuple = None
+        self.destination:Tuple = None
+        self.action_stack:List[Tuple] = []  # A stack of actions into which tasks are broken down
+        self.current_action:Tuple = None  # (action, target, product).
+        # Possible actions: 'go', 'pick', 'drop'
+        self.state:str = 'idling'  # idling, moving, blocked, loading etc. (TODO: full ontology)
+        self.next_moves:List[Tuple[int]] = []  # Placeholder for a sequence of steps in the queue
+        self.load = None  # What the robot is carrying
 
-        self.universe = Universe.get_universe()
+        self.universe:Universe = Universe.get_universe()
+
+        # Teleport to a good position:
         self._set_position(self.universe.random_empty_position())  # Teleport
-        self._report_for_service()
+        # We don't want to report for service right upon creation, let's wait for initialization
+        # to be over, and for time to start.
 
 
     def _set_position(self, position: tuple) -> None:
@@ -58,13 +64,26 @@ class Robot:
                 self._report_for_service()
                 return
 
-        if self.current_action[0] == 'go':
+        # Semaphore for action types
+        if self.current_action[0] == "go":
             target = self.current_action[1]
             if abs(self.x-target[0]) + abs(self.y-target[1]) <= 1: #  We are at destination
-                self.current_action = None
                 logger.debug(f"{self.name} Arrived at destination")
+                self.current_action = None  # Reset action
             else:
                 self.move()
+
+        elif self.current_action[0] == "pick":
+            x,y = self.current_action[1]
+            product = self.current_action[2]
+            tup = self.universe.scan(x, y, product)
+            if not tup:
+                raise SystemError(f"{product} is not reachable from {self.x}, {self.y}")
+            shelve, index = tup
+            logger.info(f"{self.name} picking {product} from {shelve.name} pos {index}")
+            shelve.remove(index, product)
+            self.current_action = None  # Reset action
+
         else:
             raise ValueError(f"Action {self.current_action} is not implemented")
 
@@ -105,7 +124,9 @@ class Robot:
             # TODO: introduce some flexibility here. Always replan? Sometimes replan?
 
 
-    def assign_task(self, task_type: str, origin: tuple=None, destination: tuple=None) -> None:
+    def assign_task(
+            self, task_type:str, origin:tuple=None, destination:tuple=None, product:str=None
+            ) -> None:
         """Assign a task to the robot.
 
         task_type can be:
@@ -113,12 +134,29 @@ class Robot:
         - 'transfer': A sequence of actions: go, pick, go, drop
         - 'idle': No task, do nothing in place
         """
+
         if task_type=="reposition":
             origin = (self.x, self.y) if origin is None else origin
-            logger.info(f"{self.name} asked to reposition from {origin} to {destination}")
             if destination is None:
                 raise ValueError("Reposition task must have a destination.")
+            logger.info(f"{self.name} asked to reposition from {origin} to {destination}")
             self._assign_action("go", destination)
+
+        elif task_type=="transfer":
+            if origin is None:
+                raise ValueError("Transfer task must have an origin.")
+            if destination is None:
+                raise ValueError("Transfer task must have a destination.")
+            logger.info(f"{self.name} asked to bring {product} from {origin} to {destination}")
+            pre_origin = (self.x, self.y)
+            self._assign_action("go", origin)
+            self._assign_action("pick", origin, product)
+            self._assign_action("go", destination)
+            # TODO: add unloading
+
+        elif task_type=="idle":
+            logger.info(f"{self.name} asked to idle for a while")
+
         else:
             raise ValueError(f"Unknown task type: {task_type}. Supported: 'reposition'.")
 
@@ -128,9 +166,9 @@ class Robot:
         self.destination = destination
 
 
-    def _assign_action(self, action: str, target: tuple) -> None:
+    def _assign_action(self, action:str, target:tuple, product:str=None) -> None:
         """Add an action to the queue of actions."""
         if action not in ["go", "pick", "drop"]:
             raise ValueError(f"Unknown action: {action}. Supported: 'go', 'pick', 'drop'.")
         logger.debug(f"{self.name} assigned action: {action} to {target}")
-        self.action_stack.append((action, target))
+        self.action_stack.append((action, target, product))

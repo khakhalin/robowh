@@ -48,11 +48,16 @@ class RandomMovementStrategy(MoveStrategy):
 
 class AStarStrategy(MoveStrategy):
     @classmethod
-    def calculate_path(cls, current_pos, target_pos, n_steps=0, until_touch=True):
+    def calculate_path(cls, current_pos, target_pos, n_steps=20, until_touch=True):
         """Calculate a path from current to target, and return n_steps of it.
 
-        if until_touch, it's enough to reach a pixel near the target pixel. It's true by default,
-        to reach shelves and loading bays.
+        Note that the default n_steps is set to 20, as our current implementation is that
+        if the robot is blocked, a pixel-sized movement is wasted, and the robot continues
+        with the NEXT step. It doesn't retry to step. Which means that they may end up in a wrong
+        isle unless we recalculat the path every now and then.
+
+        If `until_touch` is True, it's enough for the path to reach a pixel near the target pixel.
+        It's true by default, so that robots could reach shelves and loading bays.
         """
         universe = Universe.get_universe()
         grid = universe.grid.copy()  # Get environment from singleton
@@ -86,6 +91,6 @@ class AStarStrategy(MoveStrategy):
     @staticmethod
     def _valid_pos(grid, pos):
         y, x = pos
-        return (0 <= y < grid.shape[0] and
-                0 <= x < grid.shape[1] and
-                grid[y, x] != grid_codes['shelf'])  # Racks are not valid positions
+        # We accept all grid states as targets: even though we cannot travel inside a rack
+        # or a robot, we may have to travel to it, and step one pixel early.
+        return (0 <= y < grid.shape[0]) and (0 <= x < grid.shape[1])
