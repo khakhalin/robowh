@@ -68,6 +68,7 @@ class Orchestrator:
             bx,by = self.universe.bays.coords[bay_id]
 
             robot.assign_task("transfer", origin=(x,y), destination=(bx,by), product=product)
+            self.universe.observer.count_task()
             # We don't remove the product from loading bays afterwards,
             # we let it stay there. It's obviously not what's happening to products IRL,
             # but it's good enough for our purposes,  as we'll need to store something

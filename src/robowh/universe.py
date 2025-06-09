@@ -39,6 +39,7 @@ class Universe:
         self.lock = threading.Lock()
 
         # Ugly deferred imports to avoid circular dependencies
+        from robowh.observer import Observer
         from robowh.robot import Robot  # Deferred import to avoid circular dependency
         from robowh.strategies import StrategyLibary
         from robowh.scheduler import Scheduler
@@ -49,6 +50,7 @@ class Universe:
         self.list_of_all_products = set({})
 
         # Connect global objects here
+        self.observer = Observer()
         self.strategy_library = StrategyLibary()
         self.scheduler = Scheduler(self)
         self.orchestrator = Orchestrator(self)

@@ -37,7 +37,11 @@ class Viewer:
 
         @self.app.route('/get_kpis')  # Toy example
         def get_kpis():
-            return jsonify({'n_confused': self.universe.diagnostic_number})
+            return jsonify({
+                "n_tasks": self.universe.observer.n_tasks,
+                "n_shelves": self.universe.shelves.n_items,
+                "n_bay": self.universe.bays.n_items,
+                })
 
         @self.app.route('/get_grid')
         def get_grid():

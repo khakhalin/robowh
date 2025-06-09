@@ -43,8 +43,9 @@
         </div>
 
         <div class="diagnostics">
-            <div>N processed: <span id="n_processed">TODO</span></div>
-            <div>Are we alive?: <span id="n_confused">0.0000</span></div>
+            <div>Total tasks: <span id="n_tasks">0</span></div>
+            <div>Inventory in shelves: <span id="n_shelves">-</span></div>
+            <div>Inventory in bay: <span id="n_bay">-</span></div>
             <button id="addRobot">Add Inventory</button>
         </div>
     </div>
@@ -99,8 +100,10 @@
             try {
                 const response = await fetch('/get_kpis');
                 const data = await response.json();
-                document.getElementById('n_confused').textContent =
-                    data.n_confused.toFixed(4);
+                document.getElementById('n_tasks').textContent = data.n_tasks;
+                document.getElementById('n_shelves').textContent = data.n_shelves;
+                document.getElementById('n_bay').textContent = data.n_bay;
+                // document.getElementById('sh_blocked').textContent = data.sh_blocked.toFixed(2);
             } catch (error) {
                 console.error('Number update error:', error);
             }
