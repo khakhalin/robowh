@@ -62,12 +62,12 @@ class Orchestrator:
 
             shelf_id = self.universe.shelves.records[product]
             x,y = self.universe.shelves.coords[shelf_id]
+            self.universe.shelves.lock(shelf_id, product)
 
             bay_id = np.random.randint(len(self.universe.bays.inventory))
             bx,by = self.universe.bays.coords[bay_id]
 
             robot.assign_task("transfer", origin=(x,y), destination=(bx,by), product=product)
-            self.universe.shelves.lock[shelf_id] = True
             # We don't remove the product from loading bays afterwards,
             # we let it stay there. It's obviously not what's happening to products IRL,
             # but it's good enough for our purposes,  as we'll need to store something

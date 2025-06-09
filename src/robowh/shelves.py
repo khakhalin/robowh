@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 import numpy as np
 import random
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Set
 
 from robowh.universe import Universe
 from robowh.utils import grid_codes
@@ -22,7 +22,8 @@ class Shelves():
         self.records:dict[str:int] = {}  # To search shelves by product
         self.coords:List[Tuple[int]] = []  # Coordinates of every shelf
         self.inventory:List[List[str]] = []  # What is stored in every shelf
-        self.lock:list[bool] = []  # Cells are locked for placement and picking to avoid conflicts
+        self.locked_indices:list[bool] = []  # Cells are booked for r/w to avoid conflicts
+        self.locked_products:Set[str] = set({})  # Products that were promised for picking
 
         self.universe:Universe = Universe.get_universe()
 
@@ -43,7 +44,7 @@ class Shelves():
         # Create  shelf
         self.universe.grid[x, y] = grid_codes['shelf']
         self.inventory.append([])
-        self.lock.append(False)
+        self.locked_indices.append(False)
         if not empty and np.random.uniform() > 0.5:
             item_code = self.universe.new_code()
             self.place_at(cell_id, item_code)
@@ -76,7 +77,7 @@ class Shelves():
         self.n_items += 1
         self.records[product] = index
         self.universe.grid[x,y] = grid_codes['item']
-        self.lock[index] = False
+        self.unlock(index)
 
 
     def remove(self, index:int, product:str):
@@ -99,8 +100,7 @@ class Shelves():
         del self.records[product]
         if not self.inventory[index]:  # The shelf is empty now
             self.universe.grid[x,y] = grid_codes['shelf']
-        self.lock[index] = False
-
+        self.unlock(index, product)
 
     def place_optimally(self, product:str):
         """Find the closest empty number and store there."""
@@ -111,12 +111,22 @@ class Shelves():
             raise ValueError(f"The shelf {self.name} is full, cannot find an empty slot")
         self.place_at(index, product)
 
-
     def pick_random_product_for_delivery(self):
         """IRL it would not be a good method, but for us it's a substitute for realistic orders."""
-        products = [self.inventory[i] for i in range(len(self.inventory)) if not self.lock[i]]
-        products = [p for sublist in products for p in sublist]
+        products = [p for pl in self.inventory for p in pl if p not in self.locked_products]
         if not products:
             logger.warning(f"Requesting a random object off {self.name}, but the shelf is empty.")
             return None
         return random.choice(products)
+
+    def lock(self, index:int, product:str=None):
+        """Lock a cell (index) and (optionally) a product for task creation."""
+        self.locked_indices[index] = True
+        if product is not None:
+            self.locked_products.add(product)
+
+    def unlock(self, index:int, product:str=None):
+        """Unlock a cell (index) for operations."""
+        self.locked_indices[index] = False
+        if product is not None:
+            self.locked_products.remove(product)
