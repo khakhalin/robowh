@@ -46,6 +46,14 @@
             <div>Total tasks: <span id="n_tasks">0</span></div>
             <div>Inventory in shelves: <span id="n_shelves">-</span></div>
             <div>Inventory in bay: <span id="n_bay">-</span></div>
+            <div>
+                <input type="radio" name="mode" value="store" id="mode_store">
+                only store <br>
+                <input type="radio" name="mode" value="both" id="mode_both" checked>
+                both store and pick<br>
+                <input type="radio" name="mode" value="pick" id="mode_pick">
+                only pick
+            </div>
             <button id="addRobot">Add Inventory</button>
         </div>
     </div>
@@ -109,6 +117,20 @@
             }
         }
 
+        document.querySelectorAll('input[name="mode"]').forEach(elem => {
+            elem.addEventListener('change', async event => {
+                try {
+                    await fetch('/set_mode', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mode: event.target.value })
+                    });
+                } catch (error) {
+                    console.error('Failed to set mode:', error);
+                }
+            });
+        });
+
         document.getElementById('addRobot').addEventListener('click', async () => {
             try {
                 await fetch('/add_robot', { method: 'POST' });
@@ -118,10 +140,15 @@
         });
 
         // Start updates
-        setInterval(() => {
-            updateGrid();
-            updateNumber();
-        }, 33);
+        async function updateLoop() {
+            while (true) {
+                await updateGrid();
+                await updateNumber();
+                await new Promise(resolve => setTimeout(resolve, 33));
+            }
+        }
+        updateLoop();
+
     </script>
 </body>
 </html>

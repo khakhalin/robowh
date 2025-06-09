@@ -19,7 +19,8 @@ class Orchestrator:
         self.universe = universe
         self.idle_robots = []  # A list of idling robots (not IDs, but object references)
 
-        self.target_inventory = 1  # Will be updated during racks creation; can be changed later
+        self.target_inventory:int = 1  # Will be updated during racks creation; can be changed later
+        self.mode:str = 'both'  # both, pick, or store
 
 
     def process_request_for_service(self, robot: Robot):
@@ -30,32 +31,41 @@ class Orchestrator:
 
         success = self.create_delivery_task(robot)
 
-        # This part is currently unreachable, as for now we immediately give tasks to all robots
-        # But once we move to actual operations, we'll start coin-tossing in scheduler, and then
-        # some robots will become idle.
-        if not success and (robot not in self.idle_robots):
-            logger.info(f"{robot.name} is set to idle")
-            self.idle_robots.append(robot)
-            return
+        # The part below is only rechable if we run out of tasks (out of goods to move), and
+        # we arrive here with `success` set to False
+        if not success:
+            if self.universe.scan(robot.x, robot.y):
+                # TODO: For some reason this branch is never executed. See some ideas in the todo
+                # section of Readme.
+
+                # We ran out of tasks near a rack. That's not good. Relocate!
+                logger.info(f"{robot.name} tried to idle near the rack, but thats prohibited.")
+                random_position = self.universe.random_empty_position()
+                robot.assign_task("reposition", origin=None, destination=random_position)
+            else:
+                logger.info("4")
+                if (robot not in self.idle_robots):
+                    logger.info(f"{robot.name} is set to idle")
+                    self.idle_robots.append(robot)
 
 
     def create_delivery_task(self, robot: Robot):
         """Create a random store or retrieval task."""
-        # Pseudocode:
-        # 1. Check with the Scheduler if there are orders in the queue.
-        #   If there's an order, assign it to the robot.
-        #   (Although we could also check the coordinates, and sometimes take the bettss, that
-        #   maybe a beter robot, with better coordinates, will become idle soon.)
-        # 2. If no ready orders, we could consider moving the robot to a more advantagious position
-        #   (e.g., closer to the docks, or to a more central position).
-        # 3. If no need to move, register the robot as idle and wait for the next order.
+        # Decide whether we pick or store, depending on the mode of operation
+        # (coming from the JS UI).
+        if self.mode == "both":
+            if self.universe.shelves.n_items < self.target_inventory:
+                operation = "store"
+            else:
+                operation = "pick"
+        else:
+            operation = self.mode
 
-        if False: # self.universe.shelves.n_items < self.target_inventory:
+        if operation == "store":
             # Create a storage order
             self.create_random_movement_task(robot)
-        else:
+        else:  # "pick"
             # Create a retrieval order
-            # Pick
             product = self.universe.shelves.pick_random_product_for_delivery()
             if product is None: # We failed to create an order
                 return False  # Set to idle

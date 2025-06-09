@@ -1,4 +1,7 @@
-"""SCHEDULER: creates new orders for the WH, from a virtual order queue."""
+"""Scheduler creates new orders for the WH, from a virtual order queue."""
+
+# Isn't implemented. For now orchestrator hass access to an infite stream of self-generated
+# tasks, and robots are never idling.
 
 import logging
 logger = logging.getLogger(__name__)

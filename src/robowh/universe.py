@@ -81,9 +81,10 @@ class Universe:
         # Set up racks as vertical lines padded by empty spaces, and equally spaced.
         # We have some magic numbers here, to make the picture prettier. Sorry!
         gap = self.RACK_SPACING // 2
+        bottom_gap = max(self.RACK_SPACING + gap, self.N_ROBOTS // 5)
         for j in range(gap, self.GRID_SIZE, self.RACK_SPACING):
             if j < self.GRID_SIZE-gap:
-                for i in range(self.RACK_SPACING + gap, self.GRID_SIZE - gap):
+                for i in range(bottom_gap, self.GRID_SIZE - gap):
                     self.shelves.add_shelf((i, j))
                     self.shelves.add_shelf((i, j+1))
 
@@ -142,7 +143,7 @@ class Universe:
         return False
 
     def scan(self, x:int, y:int) -> Tuple:
-        """Check if product is available at any rack immediately nearby.
+        """Check if a shelf is available immediately nearby.
 
         It's kinda weird to delegate this process to the universe, but IRL it would be a robot
         scanning around, and this "around" is a property of the Universe around it, isn't it?
