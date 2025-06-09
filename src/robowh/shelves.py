@@ -14,15 +14,16 @@ from robowh.utils import grid_codes
 
 class Shelves():
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, deep=False):
         logger.info("Shelves object created")
         self.name:Optional[str] = name
         self.records:dict[str:int] = {}  # To search shelves by product
         self.coords:List[Tuple[int]] = []  # Coordinates of every shelf
-        self.inventory:List = []  # What is stored in every shelf
-        self.n_items = 0
+        self.inventory:List[List[str]] = []  # What is stored in every shelf
+        self.n_items:int = 0
+        self.deep:bool = deep  # Deep shelves store more than one item in a cell
 
-        self.universe = Universe.get_universe()
+        self.universe:Universe = Universe.get_universe()
 
     def add_shelf(self, point: Tuple[int], empty=False):
         """Create a shelf at given coordinates.
@@ -40,7 +41,7 @@ class Shelves():
         cell_id = len(self.coords)-1
         # Create  shelf
         self.universe.grid[x, y] = grid_codes['shelf']
-        self.inventory.append(None)
+        self.inventory.append([])
         if not empty and np.random.uniform() > 0.5:
             item_code = uuid.uuid4().hex[:8]  # Generate hex-based ID (32 characters)
             self.place_at(cell_id, item_code)
@@ -49,50 +50,59 @@ class Shelves():
     def place_at(self, index:int, product:str):
         """Place item (hash) product at index index."""
         logger.info(f"Product {product} is placed at index {index} on {self.name}")
+        # Check if the shelf exists
         if index >= len(self.coords):
             raise ValueError(f"Requested index {index} is out of bounds ({len(self.coords)}) " +
                              f"for shelves {self.name}")
-        if self.inventory[index] is not None:
+
+        # Check if there's space on the shelf (not deep shelves, and something is there already)
+        if (not self.deep) and (self.inventory[index]):
             raise ValueError(f"Index {index} at shelves {self.name} is already taken.")
+
+        # Check if product is unique
+        # TODO: There are obviously better ways to handle that, but for now let's just fail
         if product in self.records:
-            # TODO: There should be a better way to handle that, but for now let's just fail
             raise ValueError(f"Product {product} is already present in shelves {self.name}")
+
+        # Check if grid is in an illegal state (strictly speaking grid's problem, but let's check)
         x,y = self.coords[index]
-        if self.universe.grid[x,y] != grid_codes['shelf']:
+        if (not self.deep) and (self.universe.grid[x,y] != grid_codes['shelf']):
             raise ValueError(f"Even though pos {index} at shelf {self.name} is empty, " +
                              f"it's marked non-empty on the map!")
 
-        self.inventory[index] = product
+        self.inventory[index].append(product)  # We always store lists of strings, not bare strings
         self.n_items += 1
         self.records[product] = index
         self.universe.grid[x,y] = grid_codes['item']
 
 
-    def clear(self, index:int):
+    def remove(self, index:int, product:str):
         """Place item (hash) product at index index."""
         logger.info(f"Clear index {index} in shelf {self.name}")
         if index >= len(self.coords):
             raise ValueError(f"Index {index} out of bounds ({len(self.coords)}) for {self.name}")
-        if self.inventory[index] is None:
+        if not self.inventory[index]:  # Empty list
             raise ValueError(f"Can't clear {index} at shelves {self.name}: it's empty.")
+        if product not in self.inventory[index]:
+            raise ValueError(f"Can't find {product} in {index} of {self.name}")
 
         x,y = self.coords[index]
         if self.universe.grid[x,y] != grid_codes['item']:
             raise ValueError(f"Even though pos {index} at shelf {self.name} is taken, " +
                              f"it's marked empty on the map!")
 
-        product = self.inventory[index]
-        self.inventory[index] = None
+        self.inventory[index].remove(product)
         self.n_items -= 1
         del self.records[product]
-        self.universe.grid[x,y] = grid_codes['shelf']
+        if not self.inventory[index]:  # The shelf is empty now
+            self.universe.grid[x,y] = grid_codes['shelf']
 
 
     def place_optimally(self, product:str):
         """Find the closest empty number and store there."""
         logger.debug(f"Product {product} stored optimally at shelves {self.name}")
         try:
-            index = self.inventory.index(None)
+            index = self.inventory.index([])  # Find the first position with an empty list in it
         except ValueError:
             raise ValueError(f"The shelf {self.name} is full, cannot find an empty slot")
         self.place_at(index, product)
