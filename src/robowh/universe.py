@@ -139,13 +139,19 @@ class Universe:
                 return True
         return False
 
-    def scan(self, x:int, y:int, product:str) -> Tuple:
-        """Check if product is available at any rack immediately nearby."""
+    def scan(self, x:int, y:int) -> Tuple:
+        """Check if product is available at any rack immediately nearby.
+
+        It's kinda weird to delegate this process to the universe, but IRL it would be a robot
+        scanning around, and this "around" is a property of the Universe around it, isn't it?
+        """
         shelves = [self.bays, self.shelves]
         for shelve in shelves:
             try:
                 index = shelve.coords.index((x,y))
-                # .index is funny, instead of returning a None, it fails
+                # .index is funny, instead of returning a None, it fails.
+                # We can stop looking now, as we assume that every empty pixel can only
+                # border one shelf. And we can't grab diagonally.
                 return (shelve, index)
             except Exception:
                 pass

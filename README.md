@@ -45,14 +45,9 @@ One weird semantic issue is that movements of robots may happen at several diffe
 # Next steps
 
 TODO:
-* Occupied shelves should also count as occupied pixels for a-star purposes.
-* Count the number of robots that were processed (didn't time out), show it in the console
-* Add rack functionality (registrer places, with addresses, track inventory)
-* Start with half of racks occupied
-* Add target address functionality for incoming loads
-* Add loading bay functionality
-* Full task creation for incoming loads
 * Full task creation for outgoing loads
+* Full task creation for incoming loads
+* Count the number of robots that were processed (didn't time out), show it in the console
 * Add n tasks processed per second
 * Measure and report confusins and blockage for robots, percent of time blocked
 * Add buttons for adding robots and removing robots
@@ -60,4 +55,7 @@ TODO:
 * Make "confused" element in UI actually report the number of confused robots
 
 Nice to haves:
+* Make robots remember what they carry (or None), and check that at loading/unloading
+* Unit tests for shelves utility functions (locking, random elements)
+* Unit test for Universe `.scan()`
 * Revise the singleton situation. The handling of sigletons is still a bit awkward: Universe is the only true singleton, and it creates others, except for the viewer, that is created in the main script. But also, to most (except for robots), universe is passed as a parameter, while for robots we break circular references using a deferred import (ugly). How to best standardize this? Should we always pass a reference to the universe explicitly at object creation, or is there a better way?

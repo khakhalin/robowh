@@ -76,12 +76,25 @@ class Robot:
         elif self.current_action[0] == "pick":
             x,y = self.current_action[1]
             product = self.current_action[2]
-            tup = self.universe.scan(x, y, product)
-            if not tup:
-                raise SystemError(f"{product} is not reachable from {self.x}, {self.y}")
-            shelve, index = tup
-            logger.info(f"{self.name} picking {product} from {shelve.name} pos {index}")
-            shelve.remove(index, product)
+            scan_result = self.universe.scan(x, y)
+            if not scan_result:
+                raise SystemError(f"No shelf can be reached from {self.x}, {self.y}")
+            # We don't need to check if the product is there, as we'll just crash at picking
+            shelf, index = scan_result
+            logger.info(f"{self.name} picking {product} from {shelf.name} pos {index}")
+            shelf.remove(index, product)
+            self.current_action = None  # Reset action
+
+        elif self.current_action[0] == "drop":
+            x,y = self.current_action[1]
+            product = self.current_action[2]
+            # TODO: Here the robot could check if it is in fact carrying product
+            scan_result = self.universe.scan(x, y)  # Scan for the presence of a bay
+            if not scan_result:
+                raise SystemError(f"No shelf can be reached from {self.x}, {self.y}")
+            shelf, index = scan_result
+            logger.info(f"{self.name} storing {product} at {shelf.name} pos {index}")
+            shelf.place_at(index, product)
             self.current_action = None  # Reset action
 
         else:
@@ -152,7 +165,7 @@ class Robot:
             self._assign_action("go", origin)
             self._assign_action("pick", origin, product)
             self._assign_action("go", destination)
-            # TODO: add unloading
+            self._assign_action("drop", destination, product)
 
         elif task_type=="idle":
             logger.info(f"{self.name} asked to idle for a while")
