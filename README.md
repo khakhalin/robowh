@@ -4,11 +4,9 @@ This is a draft of a robotic warehouse simulator.
 
 # The idea
 
-We want to have a simulated robotic warehouse to be able to compare different kinds of pathfinding algorithms for robots working in this warehouse. We have one type of a robot, occupying one pixel on a square grid. These robots can to move around, carry items, and pick and store in both loading/unloading bays and warehouse racks.
+We want to have a simulated robotic warehouse to be able to compare different kinds of pathfinding algorithms for robots working in this warehouse. We will have only one type of a robot, occupying one pixel on a square grid. These robots can move around, carry items, and pick and store them in both loading/unloading bays and warehouse racks. Items are identified by their unique string codes.
 
-The trick of this sketch is that we want to be half-way between a more-or-less realistic system design (with microservices, independent robots, asynchronous communications via message queues and stacks etc.) and a (relatively) efficient simulation environment. We also want to be able to run tests, and compare different pathfinding approaches. So we'll aim for something in-between:
-some aspects of the system will be radically simplified (like for example, that robots are just
-pixels on a grid), while others may look slightly overengineered.
+The trick of this sketch is that we want to be half-way between a more-or-less realistic system design (with microservices, independent robots, asynchronous communications via message queues and stacks etc.) and a (relatively) efficient simulation environment. Eventually, we want to be able to run tests, and compare different pathfinding strategies and algorithms. So we'll aim for something "in-between" an efficient computation and a realistic WH prototype. Some aspects of the system will be radically simplified (like for example, that robots are just pixels on a grid), while others may look slightly overengineered. We won't try to vectorize movementsof robots: even though it would make the calculations faster, it would introduce too much overhead. We'll treat robots as entities that are making decisions of their own. But at the same time, we'll have a bunch of pseudo-global varibles (in a singleton Universe class), and we won't protect states of objects in this universe with getters and setters, instead exposing them directly, to preserve some pythonicity. It's a mixed approach ;)
 
 # Running the project
 
@@ -20,27 +18,26 @@ To mess with the stuff, clone and install it as a package with `pip install -e .
 
 The system consists of several units:
 1. **GUI** - a front-end, vibe-coded in JS, talking to a flask backend
-2. **View** - a flask backend responding to requests from the Visualizer
-3. **Universe** - mostly a time-engine. IRL robots would move around on their own and communicate with the orchestrator asynchronously. In this model we have a singleton Universe engine that nudges other players (both microservices and robots) one by one, allowing them to perform certan actions. It's not true concurrency, but for this purpose it's good enough. In practice we will work with turns (time ticks), and each turn will take a fixed amount of time. During a turn, robots will be given priority in random order. If all of them manage to get processed, great! If not, the turn will be over, and the priority will be passed to system operations (Observer, Scheduler), until a new turn is started.
-4. **Orchestrator** - the main logic of the warehouse: coordinating storage locations, assigning tasks to robots. IRL would receive orders from the Scheduler (but we have a short-cut here, and just move random stuff around all the time).
-5. **Robots** - each robot is an object that interfaces with Universe (on movement and other robot-driven actions) and with the Orchestrator (getting tasks from it, and reporting back)
+2. **View** - a Flask backend responding to requests from the Visualizer
+3. **Universe** - a global singleton object that also serves as a time-engine, orchestrating time-ticks. In a real physical WH robots would move around on their own and communicate with the orchestrator asynchronously. In this model however we have a Universe engine that nudges other players (both microservices and robots) one by one, allowing them to perform certan actions. It's not true concurrency, but for this purpose it's good enough. To simulate concurrency, robots are nudged (given priority) in random order. Each "turn" (time tick) takes a fixed amount of time, and once this time is up, remaining robots are not given priority, simulating a compute bottleneck. Other system operations (Orchestrator, Observer) are always given their part of compute however, to make sure the system keeps running.
+4. **Orchestrator** - the main logic of the warehouse: coordinating storage locations, assigning tasks to robots. IRL it would receive orders from the Scheduler, but we have cut some corners, and instead robots are moving all the time, with new orders created "on the fly" the moment a robot completed its previous task.
+5. **Robots** - each robot is an object that interfaces with the Universe (on movement and other robot-driven actions) and with the Orchestrator (getting tasks from it, and reporting back).
 6. **Strategies** - abstracted pathfinding methods that for a given start and end points calculate a given number of steps in the direction of this point
-6. **Observer** - collects diagnostic information about the state of the system
-7. **Scheduler** - Acts as an external interface of the warehouse. Not really used in this project.
-8. **Strategies** - abstract algorithms that receive information about a required subtask (for now limited to moving from point A to point B) and output some actions for a robot to follow (UDLR movements + wait)
+6. **Observer** - collects diagnostic information about the state of the system.
+7. **Scheduler** - acts as an external interface of the warehouse. Not really used in this project, at least for now.
 
 The ontology of behaviors:
-* Orders - normally would come "from the exernal world" and placed in a queue by the Scheduler. In a model one would probably expect the Scheduler to generate fake orders. But in this model, for now, Scheduler is an empty shell, and tasks are generated directly by the Ochestrator.
-* Tasks - are assigned to robots by the Orchestrator. IRL Orchestrator would read them from a queue populated by scheduler. In this model, the Ochestrator generates tasks itself (at least for now).
+* Orders - normally would come "from the exernal world" and placed in a queue by the Scheduler. Not used for now, but are mentioned every now and then, as a concept.
+* Tasks - are assigned to robots by the Orchestrator. IRL Orchestrator would read them from a queue populated by scheduler. In this model, the Ochestrator generates tasks itself (at least for now). A typical task sounds like "Bring product A from loading bay 2 to shelf position 101", and may in principle include preparation and postprocesssing steps.
 * Actions - most tasks consist of several actions, a typical task for a typical robot is broken into at least 4 tasks: come to A, pick an order, move to B, drop an order.
-* A queue of planned next moves - a part of a planned motion, generated for an action by a staregy
-* Individual move
+* A queue of planned next elementary moves- a part of a planned motion, generated by a staregy, according to the current action
+* Individual move - up down left right
 
-One weird semantic issue is that movements of robots may happen at several different levels of organization. We may want to just move robots around to resolve bottlenecks; movements come up during task execution, as parts of it; and then movement is planned, and finally elementary movements on the grid are happening as well. Let's use different words for this. It's not an ideal list of course, but better than nothing haha:
-* A task that is movement-only we will call `reposition`
-* An action within a task that is about moving from A to B we'll call `go`
-* A sequence of next elementary steps we'll call `next_moves`
-* Finally, elementary moves we'll call `move`
+One weird semantic issue is that movements of robots may happen at several different levels of organization. So let's try to use different words for this. It's not an ideal list of course, but better than nothing haha:
+* A task that is movement-only will be called `reposition`
+* An action within a task that is about moving from A to B will be called `go`
+* A sequence of next elementary steps is called `next_moves`
+* Finally, elementary moves are performed by a method `move()`
 
 # Next steps
 

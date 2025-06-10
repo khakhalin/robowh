@@ -162,6 +162,9 @@ class Universe:
 
     def new_code(self):
         """Create a new code."""
+        # The uuid call below is guaranteed to produce unique codes, but after we truncate
+        # them, strictly speaking, they are no longer guaranteed to be unique. The probability
+        # of a repeat is very low though, so it's enough to try again, and we'll succeed.
         while True:
             product = uuid.uuid4().hex[:8]  # Generate hex-based ID (32 characters)
             if product not in self.list_of_all_products:
