@@ -60,7 +60,9 @@ class Shelves():
 
         # Check if there's space on the shelf (not deep shelves, and something is there already)
         if (not self.deep) and (self.inventory[index]):
-            raise ValueError(f"Index {index} at shelves {self.name} is already taken.")
+            cell_content = self.inventory[index]
+            raise ValueError(f"Index {index} at shelves {self.name} is already taken " +
+                             f"by product {cell_content}")
 
         # Check if product is unique
         # TODO: There are obviously better ways to handle that, but for now let's just fail
@@ -71,7 +73,7 @@ class Shelves():
         x,y = self.coords[index]
         if (not self.deep) and (self.universe.grid[x,y] != grid_codes['shelf']):
             raise ValueError(f"Even though pos {index} at shelf {self.name} is empty, " +
-                             f"it's marked non-empty on the map!")
+                             f"it's marked as occupied on the map.")
 
         self.inventory[index].append(product)  # We always store lists of strings, not bare strings
         self.n_items += 1
@@ -82,7 +84,7 @@ class Shelves():
 
     def remove(self, index:int, product:str) -> None:
         """Place item (hash) product at index index."""
-        logger.info(f"Clear index {index} in shelf {self.name}")
+        logger.info(f"Remove {product} from shelf {self.name} pos {index}")
         if index >= len(self.coords):
             raise ValueError(f"Index {index} out of bounds ({len(self.coords)}) for {self.name}")
         if not self.inventory[index]:  # Empty list
@@ -92,8 +94,8 @@ class Shelves():
 
         x,y = self.coords[index]
         if self.universe.grid[x,y] != grid_codes['item']:
-            raise ValueError(f"Even though pos {index} at shelf {self.name} is taken, " +
-                             f"it's marked empty on the map!")
+            raise ValueError(f"Even though pos {index} at shelf {self.name} is occupied, " +
+                             f"it's marked empty on the map.")
 
         self.inventory[index].remove(product)
         self.n_items -= 1
@@ -106,7 +108,18 @@ class Shelves():
         """Find the closest empty number and store there."""
         logger.debug(f"Requesting optimal location at shelves {self.name}")
         try:
-            index = self.inventory.index([])  # Find the first position with an empty list in it
+            # Find the first UNLOCKED position with an empty list in it.
+            # As two simple python lists are involved, it's not a very effective operation.
+            # The awkward construction below helps somewhat, but it looks too complex.
+            index = next(
+                (
+                    i
+                    for i, (inv, lck)
+                    in enumerate(zip(self.inventory, self.locked_indices))
+                    if not inv and not lck
+                ),
+                None
+            )
             # We're assuming here that shelves are created in a correct order, starting from
             # loading bays and going away from them. Could be a differet logic of course.
         except ValueError:
@@ -123,12 +136,14 @@ class Shelves():
 
     def lock(self, index:int, product:str=None) -> None:
         """Lock a cell (index) and (optionally) a product for task creation."""
+        logger.debug(f"Locking cell {self.name} pos {index}")
         self.locked_indices[index] = True
         if product is not None:
             self.locked_products.add(product)
 
     def unlock(self, index:int, product:str=None) -> None:
         """Unlock a cell (index) for operations."""
+        logger.debug(f"Unlocking cell {self.name} pos {index}")
         self.locked_indices[index] = False
         if product is not None:
             if product in self.locked_products:

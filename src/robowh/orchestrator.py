@@ -40,8 +40,7 @@ class Orchestrator:
 
                 # We ran out of tasks near a rack. That's not good. Relocate!
                 logger.info(f"{robot.name} tried to idle near the rack, but thats prohibited.")
-                random_position = self.universe.random_empty_position()
-                robot.assign_task("reposition", origin=None, destination=random_position)
+                self.create_random_movement_task(robot)
             else:
                 if (robot not in self.idle_robots):
                     logger.info(f"{robot.name} is set to idle")
@@ -62,20 +61,34 @@ class Orchestrator:
 
         if operation == "store":
             # Create a storage order
-            self.create_random_movement_task(robot)
-            # TODO: Add a storage task here!
-        else:  # "pick"
+            product = self.universe.bays.pick_random_product_for_delivery()
+            if product is None: # We failed to create an order
+                return False  # Try to set the robot to idle
+
+            bay_id = self.universe.bays.records[product]
+            bx,by = self.universe.bays.coords[bay_id]
+            self.universe.bays.lock(bay_id, product)  # Lock the product
+
+            shelf_id = self.universe.shelves.request_optimal_placement()
+            sx,sy = self.universe.shelves.coords[shelf_id]
+            self.universe.shelves.lock(shelf_id, None)  # Lock the space
+
+            robot.assign_task("transfer", origin=(bx,by), destination=(sx,sy), product=product)
+            self.universe.observer.count_task()
+
+        else:  # operation == "pick"
             # Create a retrieval order
             product = self.universe.shelves.pick_random_product_for_delivery()
             if product is None: # We failed to create an order
-                return False  # Set to idle
+                return False  # Try to set the robot to idle
 
             shelf_id = self.universe.shelves.records[product]
             x,y = self.universe.shelves.coords[shelf_id]
-            self.universe.shelves.lock(shelf_id, product)
+            self.universe.shelves.lock(shelf_id, product)  # Lock the product
 
             bay_id = np.random.randint(len(self.universe.bays.inventory))
             bx,by = self.universe.bays.coords[bay_id]
+            # No need to lock a bay - they are assumed to have infinite capacity
 
             robot.assign_task("transfer", origin=(x,y), destination=(bx,by), product=product)
             self.universe.observer.count_task()
