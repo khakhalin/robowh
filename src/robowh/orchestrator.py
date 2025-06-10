@@ -43,14 +43,13 @@ class Orchestrator:
                 random_position = self.universe.random_empty_position()
                 robot.assign_task("reposition", origin=None, destination=random_position)
             else:
-                logger.info("4")
                 if (robot not in self.idle_robots):
                     logger.info(f"{robot.name} is set to idle")
                     self.idle_robots.append(robot)
 
 
     def create_delivery_task(self, robot: Robot):
-        """Create a random store or retrieval task."""
+        """Create a random storage or retrieval task."""
         # Decide whether we pick or store, depending on the mode of operation
         # (coming from the JS UI).
         if self.mode == "both":
@@ -64,6 +63,7 @@ class Orchestrator:
         if operation == "store":
             # Create a storage order
             self.create_random_movement_task(robot)
+            # TODO: Add a storage task here!
         else:  # "pick"
             # Create a retrieval order
             product = self.universe.shelves.pick_random_product_for_delivery()

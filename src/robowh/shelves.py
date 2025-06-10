@@ -13,7 +13,7 @@ from robowh.utils import grid_codes
 
 class Shelves():
 
-    def __init__(self, name=None, deep=False):
+    def __init__(self, name=None, deep=False) -> None:
         logger.info("Shelves object created")
         self.name:Optional[str] = name
         self.deep:bool = deep  # Deep shelves store more than one item in a cell
@@ -27,7 +27,7 @@ class Shelves():
 
         self.universe:Universe = Universe.get_universe()
 
-    def add_shelf(self, point: Tuple[int], empty=False):
+    def add_shelf(self, point: Tuple[int], empty=False) -> None:
         """Create a shelf at given coordinates.
 
         By default, we'll be creating shelves that are filled in 50% of cases. It's not a perfect
@@ -50,7 +50,7 @@ class Shelves():
             self.place_at(cell_id, item_code)
 
 
-    def place_at(self, index:int, product:str):
+    def place_at(self, index:int, product:str) -> None:
         """Place item (hash) product at index index."""
         logger.info(f"Product {product} is placed at index {index} on {self.name}")
         # Check if the shelf exists
@@ -80,7 +80,7 @@ class Shelves():
         self.unlock(index)
 
 
-    def remove(self, index:int, product:str):
+    def remove(self, index:int, product:str) -> None:
         """Place item (hash) product at index index."""
         logger.info(f"Clear index {index} in shelf {self.name}")
         if index >= len(self.coords):
@@ -102,16 +102,18 @@ class Shelves():
             self.universe.grid[x,y] = grid_codes['shelf']
         self.unlock(index, product)
 
-    def place_optimally(self, product:str):
+    def request_optimal_placement(self) -> int:
         """Find the closest empty number and store there."""
-        logger.debug(f"Product {product} stored optimally at shelves {self.name}")
+        logger.debug(f"Requesting optimal location at shelves {self.name}")
         try:
             index = self.inventory.index([])  # Find the first position with an empty list in it
+            # We're assuming here that shelves are created in a correct order, starting from
+            # loading bays and going away from them. Could be a differet logic of course.
         except ValueError:
             raise ValueError(f"The shelf {self.name} is full, cannot find an empty slot")
-        self.place_at(index, product)
+        return index
 
-    def pick_random_product_for_delivery(self):
+    def pick_random_product_for_delivery(self) -> str:
         """IRL it would not be a good method, but for us it's a substitute for realistic orders."""
         products = [p for pl in self.inventory for p in pl if p not in self.locked_products]
         if not products:
@@ -119,14 +121,17 @@ class Shelves():
             return None
         return random.choice(products)
 
-    def lock(self, index:int, product:str=None):
+    def lock(self, index:int, product:str=None) -> None:
         """Lock a cell (index) and (optionally) a product for task creation."""
         self.locked_indices[index] = True
         if product is not None:
             self.locked_products.add(product)
 
-    def unlock(self, index:int, product:str=None):
+    def unlock(self, index:int, product:str=None) -> None:
         """Unlock a cell (index) for operations."""
         self.locked_indices[index] = False
         if product is not None:
-            self.locked_products.remove(product)
+            if product in self.locked_products:
+                self.locked_products.remove(product)
+            else:
+                logger.debug("Requested to unlock {product} from {self.name}, but it's not locked.")

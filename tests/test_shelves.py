@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 from unittest.mock import MagicMock
 import numpy as np
@@ -52,7 +55,7 @@ def test_place_stuff(universe):
         sh.place_at(2, "product_other")  # This place is already taken
 
 
-def test_remove_shelf(universe):
+def test_remove_from_shelf(universe):
     sh = Shelves()
     for i in range(5):
         sh.add_shelf((2,i), empty=True)
@@ -76,11 +79,14 @@ def test_place_optimally(universe):
         if i in [2,3]:  # But not 0, 1 or 4!
             sh.place_at(i, str(i))
     assert [int(bool(p)) for p in sh.inventory] == [0, 0, 1, 1, 0]
-    sh.place_optimally("product0")
+    i = sh.request_optimal_placement()
+    sh.place_at(i, "product0")
     assert [int(bool(p)) for p in sh.inventory] == [1, 0, 1, 1, 0]
-    sh.place_optimally("product1")
+    i = sh.request_optimal_placement()
+    sh.place_at(i, "product1")
     assert [int(bool(p)) for p in sh.inventory] == [1, 1, 1, 1, 0]
-    sh.place_optimally("product2")
+    i = sh.request_optimal_placement()
+    sh.place_at(i, "product2")
     assert [int(bool(p)) for p in sh.inventory] == [1, 1, 1, 1, 1]
 
     with pytest.raises(Exception):
