@@ -82,9 +82,9 @@ class Universe:
         # We have some magic numbers here, to make the picture prettier. Sorry!
         gap = self.RACK_SPACING // 2
         bottom_gap = max(self.RACK_SPACING + gap, self.N_ROBOTS // 5)
-        for j in range(gap, self.GRID_SIZE, self.RACK_SPACING):
-            if j < self.GRID_SIZE-gap:
-                for i in range(bottom_gap, self.GRID_SIZE - gap):
+        for i in range(bottom_gap, self.GRID_SIZE - gap):
+            for j in range(gap, self.GRID_SIZE, self.RACK_SPACING):
+                if j < self.GRID_SIZE-gap:
                     self.shelves.add_shelf((i, j))
                     self.shelves.add_shelf((i, j+1))
 

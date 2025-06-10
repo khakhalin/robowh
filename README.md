@@ -45,10 +45,7 @@ One weird semantic issue is that movements of robots may happen at several diffe
 # Next steps
 
 TODO:
-* Change `place_optimally` to "request optimal location"
-* Full task creation for incoming loads
-* Move orders creation logic to the scheduler.
-* Front-end switch to turn loading and unloading off
+* We have an idling bug currently that locks the WH with some probability. Make "idling" about picking a point at random, not near a rack, and going to it. I even tried to code it, but it seems that robots that are blocking the bays before the warehouse dies are not finishing their tasks, so they never "report for service", and never relocate. Can it be that modified A-star fails when initiated right next to the goal in some weird way? Or are they failing to unload their load for some other weird reason?
 * Count the number of robots that were processed (didn't time out), show it in the console
 * Add n tasks processed per second
 * Measure and report confusins and blockage for robots, percent of time blocked
@@ -57,7 +54,7 @@ TODO:
 * Make "confused" element in UI actually report the number of confused robots
 
 Nice to haves:
-* Make "idling" about picking a point at random, not near a rack, and going to it. NOTE: I even tried to code it, but it seems that robots that are blocking the bays before the warehouse dies are not finishing their tasks, so they never "report for service", and never relocate. Can it be that modified A-star fails when initiated right next to the goal in some weird way? Or are they failing to unload their load for some other weird reason?
+* Move orders creation logic to the scheduler?
 * Make robots remember what they carry (or None), and check that at loading/unloading
 * Unit tests for shelves utility functions (locking, random elements)
 * Unit test for Universe `.scan()`
