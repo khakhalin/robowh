@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 from typing import List, Tuple, Literal, Optional, cast
 
-from robowh.types import RobotAction, Product, Coords
+from robowh.custom_types import RobotAction, Product, Coords
 from robowh.universe import Universe
 from robowh.utils import grid_codes
 from robowh.strategies import MoveStrategy
@@ -23,7 +23,7 @@ class Robot:
         self.origin:Optional[Coords] = None
         self.destination:Optional[Coords] = None
         # Action is a sequence of action proper + optional coords, product
-        self.current_action:Optional[RobotAction]  # May be None in-between actions or while idling
+        self.current_action:Optional[RobotAction] = None # None in-between actions or while idling
         self.action_queue:List[RobotAction] = []  # A queue of scheduled actions
         self.state:Literal["idling", "moving", "blocked"] = "idling"
         self.next_moves:List[Tuple[int]] = []  # Placeholder for a sequence of steps in the queue

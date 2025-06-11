@@ -9,7 +9,7 @@ from typing import List, Tuple, Optional, Set
 
 from robowh.universe import Universe
 from robowh.utils import grid_codes
-from robowh.types import RobotAction, Product, Coords, Optional
+from robowh.custom_types import Product, Coords, Optional
 
 
 class Shelves():
@@ -28,7 +28,7 @@ class Shelves():
 
         self.universe:Universe = Universe.get_universe()
 
-    def add_shelf(self, point: Tuple[int], empty=False) -> None:
+    def add_shelf(self, point: Coords, empty=False) -> None:
         """Create a shelf at given coordinates.
 
         By default, we'll be creating shelves that are filled in 50% of cases. It's not a perfect
@@ -51,7 +51,7 @@ class Shelves():
             self.place_at(cell_id, item_code)
 
 
-    def place_at(self, index:int, product:str) -> None:
+    def place_at(self, index:int, product:Product) -> None:
         """Place item (hash) product at index index."""
         logger.info(f"Product {product} is placed at index {index} on {self.name}")
         # Check if the shelf exists
@@ -83,7 +83,7 @@ class Shelves():
         self.unlock(index)
 
 
-    def remove(self, index:int, product:str) -> None:
+    def remove(self, index:int, product:Product) -> None:
         """Place item (hash) product at index index."""
         logger.info(f"Remove {product} from shelf {self.name} pos {index}")
         if index >= len(self.coords):
@@ -135,14 +135,14 @@ class Shelves():
             return None
         return random.choice(products)
 
-    def lock(self, index:int, product:str=None) -> None:
+    def lock(self, index:int, product:Optional[Product]=None) -> None:
         """Lock a cell (index) and (optionally) a product for task creation."""
         logger.debug(f"Locking cell {self.name} pos {index}")
         self.locked_indices[index] = True
         if product is not None:
             self.locked_products.add(product)
 
-    def unlock(self, index:int, product:str=None) -> None:
+    def unlock(self, index:int, product:Optional[Product]=None) -> None:
         """Unlock a cell (index) for operations."""
         logger.debug(f"Unlocking cell {self.name} pos {index}")
         self.locked_indices[index] = False

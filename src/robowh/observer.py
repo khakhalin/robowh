@@ -15,6 +15,7 @@ class Observer():
 
     def __init__(self):
         self.n_tasks:int = 0
+        self.n_blocked:int = 0
 
     def count_task(self):
         self.n_tasks += 1
