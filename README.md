@@ -14,6 +14,8 @@ Clone the repo. Run `/src/robowh/main.py`. In a browser, run `http://localhost:5
 
 To mess with the stuff, clone and install it as a package with `pip install -e .`.
 
+![Screenshot with a mid-sized WH](screenshot.png)
+
 # Architecture overview
 
 The system consists of several units:
