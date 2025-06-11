@@ -46,10 +46,8 @@ One weird semantic issue is that movements of robots may happen at several diffe
 TODO:
 * Count the number of robots that were processed (didn't time out), show it in the console
 * Add n tasks processed per second
-* Measure and report confusins and blockage for robots, percent of time blocked
-* Add buttons for adding robots and removing robots
+* Make the button do something (either add robots or add inventory)
 * Improve unit test for robots, as towards the end it seems to be making strange assumptions
-* Make "confused" element in UI actually report the number of confused robots
 
 Nice to haves:
 * Actually support `mypy`. For now typehints are mostly for my own visual benefit, the most common violation being setting a non-optional field to None.
