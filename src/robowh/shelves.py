@@ -9,6 +9,7 @@ from typing import List, Tuple, Optional, Set
 
 from robowh.universe import Universe
 from robowh.utils import grid_codes
+from robowh.types import RobotAction, Product, Coords, Optional
 
 
 class Shelves():
@@ -19,11 +20,11 @@ class Shelves():
         self.deep:bool = deep  # Deep shelves store more than one item in a cell
 
         self.n_items:int = 0
-        self.records:dict[str:int] = {}  # To search shelves by product
-        self.coords:List[Tuple[int]] = []  # Coordinates of every shelf
-        self.inventory:List[List[str]] = []  # What is stored in every shelf
+        self.records:dict[Product,int] = {}  # To search shelves by product
+        self.coords:List[Optional[Coords]] = []  # Coordinates of every shelf
+        self.inventory:List[List[Product]] = []  # What is stored in every shelf
         self.locked_indices:list[bool] = []  # Cells are booked for r/w to avoid conflicts
-        self.locked_products:Set[str] = set({})  # Products that were promised for picking
+        self.locked_products:Set[Product] = set({})  # Products that were promised for picking
 
         self.universe:Universe = Universe.get_universe()
 

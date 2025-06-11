@@ -1,20 +1,20 @@
 # Robotic Warehouse: a sketch
 
-This is a draft of a robotic warehouse simulator.
+This is a sketch of a robotic warehouse simulator.
+
+![Screenshot with a mid-sized WH](screenshot.png)
 
 # The idea
 
-We want to have a simulated robotic warehouse to be able to compare different kinds of pathfinding algorithms for robots working in this warehouse. We will have only one type of a robot, occupying one pixel on a square grid. These robots can move around, carry items, and pick and store them in both loading/unloading bays and warehouse racks. Items are identified by their unique string codes.
+We want to have a simulated robotic warehouse, to be able to compare different kinds of pathfinding algorithms for robots working in this warehouse. We'll have only one type of a robot, each robot occupying one pixel on a square grid. These robots can move around, carry items, and pick and store them in either racks or loading bays at one side of the warehouse. Items are identified by their unique string codes.
 
-The trick of this sketch is that we want to be half-way between a more-or-less realistic system design (with microservices, independent robots, asynchronous communications via message queues and stacks etc.) and a (relatively) efficient simulation environment. Eventually, we want to be able to run tests, and compare different pathfinding strategies and algorithms. So we'll aim for something "in-between" an efficient computation and a realistic WH prototype. Some aspects of the system will be radically simplified (like for example, that robots are just pixels on a grid), while others may look slightly overengineered. We won't try to vectorize movementsof robots: even though it would make the calculations faster, it would introduce too much overhead. We'll treat robots as entities that are making decisions of their own. But at the same time, we'll have a bunch of pseudo-global varibles (in a singleton Universe class), and we won't protect states of objects in this universe with getters and setters, instead exposing them directly, to preserve some pythonicity. It's a mixed approach ;)
+The peculiar vibe of this sketch in particular is that we want to land half-way between a realistic system design (with microservices, independent robots, asynchronous communications via message queues and stacks etc.) and a (relatively) efficient simulation environment. Eventually, we want to be able to run tests, and compare different pathfinding strategies and algorithms. Because of that indended use, some aspects of the system will be radically simplified (like for example, that robots are just pixels on a grid), while others may look slightly overengineered. We won't try to vectorize movementsof robots: even though it would make the calculations faster, it would introduce too much cognitive load, and make supporting this system harder in the long-term. For example, we'll treat robots as entities that are making decisions of their own, and we'll try to compartmentalize all of this logic into their own class (even though externalizing it and vectorizing the movements would have been faster). But at the same time, we'll have a bunch of pseudo-global varibles (most notably, in a singleton Universe class), and we won't protect states of objects in this universe with getters and setters, instead exposing them directly, to preserve some pythonicity. So a robot will be able to reach directly to the rack via something like `self.universe.shelves.inventory`, which _is_ risky, but will make the code simpler and more concise. It's a mixed approach ;)
 
 # Running the project
 
 Clone the repo. Run `/src/robowh/main.py`. In a browser, run `http://localhost:5000/`.
 
 To mess with the stuff, clone and install it as a package with `pip install -e .`.
-
-![Screenshot with a mid-sized WH](screenshot.png)
 
 # Architecture overview
 
@@ -52,6 +52,7 @@ TODO:
 * Make "confused" element in UI actually report the number of confused robots
 
 Nice to haves:
+* Actually support `mypy`. For now typehints are mostly for my own visual benefit, the most common violation being setting a non-optional field to None.
 * Move orders creation logic to the scheduler?
 * Make robots remember what they carry (or None), and check that at loading/unloading
 * Unit tests for shelves utility functions (locking, random elements)

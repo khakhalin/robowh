@@ -3,10 +3,9 @@
 import logging
 logger = logging.getLogger(__name__)
 
-import numpy as np
-from typing import List, Tuple
-import random
+from typing import List, Tuple, Literal, Optional, cast
 
+from robowh.types import RobotAction, Product, Coords
 from robowh.universe import Universe
 from robowh.utils import grid_codes
 from robowh.strategies import MoveStrategy
@@ -18,15 +17,15 @@ class Robot:
         logger.debug(f"Spawning a new robot: {name}")
         self.name:str = name
         self.strategy:MoveStrategy = strategy
-        self.x:int = None
-        self.y:int = None
-        self.task:str = 'idle' # idle, reposition, transfer
-        self.origin:Tuple = None
-        self.destination:Tuple = None
-        self.action_stack:List[Tuple] = []  # A stack of actions into which tasks are broken down
-        self.current_action:Tuple = None  # (action, target, product).
-        # Possible actions: 'go', 'pick', 'drop'
-        self.state:str = 'idling'  # idling, moving, blocked, loading etc. (TODO: full ontology)
+        self.x:int = -1
+        self.y:int = -1
+        self.task:Literal["idle", "reposition", "transfer"] = 'idle'
+        self.origin:Optional[Coords] = None
+        self.destination:Optional[Coords] = None
+        # Action is a sequence of action proper + optional coords, product
+        self.current_action:Optional[RobotAction]  # May be None in-between actions or while idling
+        self.action_queue:List[RobotAction] = []  # A queue of scheduled actions
+        self.state:Literal["idling", "moving", "blocked"] = "idling"
         self.next_moves:List[Tuple[int]] = []  # Placeholder for a sequence of steps in the queue
         self.load = None  # What the robot is carrying
 
@@ -38,7 +37,7 @@ class Robot:
         # to be over, and for time to start.
 
 
-    def _set_position(self, position: tuple) -> None:
+    def _set_position(self, position: Coords) -> None:
         """Set the robot's position in the universe. Teleportation."""
         if not isinstance(position, tuple) or len(position) != 2:
             raise ValueError("Position must be a tuple of (x, y) coordinates.")
@@ -57,24 +56,26 @@ class Robot:
         # 1. Check if we are in a no action state. If no action, pop(0) from the action stack
         # 2. If we have an ongoing action, perform this action
         # 3. Otherwise, idle
-        if not self.current_action:
-            if len(self.action_stack)>0:
-                self.current_action = self.action_stack.pop(0)
+
+        if self.current_action is None:
+            if len(self.action_queue) > 0:
+                self.current_action = self.action_queue.pop(0)
             else: # We can only idle
                 self._report_for_service()
                 return
 
         # Semaphore for action types
         if self.current_action[0] == "go":
-            target = self.current_action[1]
+            target = cast(Coords, self.current_action[1])
             if abs(self.x-target[0]) + abs(self.y-target[1]) <= 1: #  We are at destination
                 logger.debug(f"{self.name} Arrived at destination")
                 self.current_action = None  # Reset action
+                return
             else:
                 self.move()
 
         elif self.current_action[0] == "pick":
-            x,y = self.current_action[1]
+            x,y = cast(Coords, self.current_action[1])
             product = self.current_action[2]
             scan_result = self.universe.scan(x, y)
             if not scan_result:
@@ -86,7 +87,7 @@ class Robot:
             self.current_action = None  # Reset action
 
         elif self.current_action[0] == "drop":
-            x,y = self.current_action[1]
+            x,y = cast(Coords, self.current_action[1])
             product = self.current_action[2]
             # TODO: Here the robot could check if it is in fact carrying product
             scan_result = self.universe.scan(x, y)  # Scan for the presence of a bay
@@ -128,17 +129,22 @@ class Robot:
             self.universe.grid[self.x, self.y] = grid_codes['empty']
             self.x, self.y = new_x, new_y
             self.universe.grid[self.x, self.y] = grid_codes['robot']
-            self.state = 'moving'
-        else:  # Cannot move, think
+            if self.state == "blocked":
+                # It if was blocked previously, change the total blocked count
+                self.universe.observer.n_blocked -= 1
+                self.state = "moving"
+        else:  # Cannot move
+            # Change color on the map:
             self.universe.grid[self.x, self.y] = grid_codes['confused']
             # logger.debug(f"{self.name} stumbled at ({self.x}, {self.y})")
-            self.state = 'blocked'
-            # Depending on the strategy, it could be a good point to replan from scratch.
+            self.state = "blocked"
+            self.universe.observer.n_blocked += 1
+            # Depending on the strategy, it could be a reasonable point to replan from scratch.
             # TODO: introduce some flexibility here. Always replan? Sometimes replan?
 
 
     def assign_task(
-            self, task_type:str, origin:tuple=None, destination:tuple=None, product:str=None
+            self, task_type:str, origin:Coords=None, destination:Coords=None, product:Product=None
             ) -> None:
         """Assign a task to the robot.
 
@@ -179,9 +185,9 @@ class Robot:
         self.destination = destination
 
 
-    def _assign_action(self, action:str, target:tuple, product:str=None) -> None:
+    def _assign_action(self, action:str, target:Coords, product:str=Product) -> None:
         """Add an action to the queue of actions."""
         if action not in ["go", "pick", "drop"]:
             raise ValueError(f"Unknown action: {action}. Supported: 'go', 'pick', 'drop'.")
         logger.debug(f"{self.name} assigned action: {action} to {target}")
-        self.action_stack.append((action, target, product))
+        self.action_queue.append((action, target, product))
