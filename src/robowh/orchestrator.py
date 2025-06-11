@@ -35,10 +35,7 @@ class Orchestrator:
         # we arrive here with `success` set to False
         if not success:
             if self.universe.scan(robot.x, robot.y):
-                # TODO: For some reason this branch is never executed. See some ideas in the todo
-                # section of Readme.
-
-                # We ran out of tasks near a rack. That's not good. Relocate!
+                # We ran out of tasks near a rack. That's not good. Relocate! (anywhere else)
                 logger.info(f"{robot.name} tried to idle near the rack, but thats prohibited.")
                 self.create_random_movement_task(robot)
             else:

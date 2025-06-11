@@ -29,8 +29,8 @@ class Universe:
 
     # TODO: Move these constants to some config file
     MAX_UPDATE_TIME = 0.1  # 10 ms
-    GRID_SIZE = 30
-    N_ROBOTS = 30
+    GRID_SIZE = 50
+    N_ROBOTS = 50
     RACK_SPACING = 7
     BAY_SPACING = 5
 
@@ -142,22 +142,26 @@ class Universe:
                 return True
         return False
 
-    def scan(self, x:int, y:int) -> Tuple:
+    def scan(self, x0:int, y0:int) -> Tuple:
         """Check if a shelf is available immediately nearby.
 
         It's kinda weird to delegate this process to the universe, but IRL it would be a robot
         scanning around, and this "around" is a property of the Universe around it, isn't it?
         """
         shelves = [self.bays, self.shelves]
-        for shelve in shelves:
-            try:
-                index = shelve.coords.index((x,y))
-                # .index is funny, instead of returning a None, it fails.
-                # We can stop looking now, as we assume that every empty pixel can only
-                # border one shelf. And we can't grab diagonally.
-                return (shelve, index)
-            except Exception:
-                pass
+        deltas = [(0,0), (0,1), (1,0), (0,-1), (-1, 0)]
+        for delta in deltas:
+            x = x0 + delta[0]
+            y = y0 + delta[1]
+            for shelve in shelves:
+                try:
+                    index = shelve.coords.index((x,y))
+                    # .index is funny, instead of returning a None, it fails.
+                    # We can stop looking now, as we assume that every empty pixel can only
+                    # border one shelf. And we can't grab diagonally.
+                    return (shelve, index)
+                except Exception:
+                    pass
         return False
 
     def new_code(self):
