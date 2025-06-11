@@ -131,7 +131,7 @@ class Shelves():
         """IRL it would not be a good method, but for us it's a substitute for realistic orders."""
         products = [p for pl in self.inventory for p in pl if p not in self.locked_products]
         if not products:
-            logger.warning(f"Requesting a random object off {self.name}, but the shelf is empty.")
+            logger.info(f"Requesting a random object off empty {self.name}.")
             return None
         return random.choice(products)
 

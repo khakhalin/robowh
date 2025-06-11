@@ -46,6 +46,7 @@
             <div>Total tasks: <span id="n_tasks">0</span></div>
             <div>Inventory in shelves: <span id="n_shelves">-</span></div>
             <div>Inventory in bay: <span id="n_bay">-</span></div>
+            <div>Share blocked: <span id="sh_blocked">-</span>%</div>
             <div>
                 <input type="radio" name="mode" value="store" id="mode_store">
                 only store <br>
@@ -111,7 +112,8 @@
                 document.getElementById('n_tasks').textContent = data.n_tasks;
                 document.getElementById('n_shelves').textContent = data.n_shelves;
                 document.getElementById('n_bay').textContent = data.n_bay;
-                // document.getElementById('sh_blocked').textContent = data.sh_blocked.toFixed(2);
+                document.getElementById('sh_blocked').textContent =
+                    data.sh_blocked.toFixed(0);
             } catch (error) {
                 console.error('Number update error:', error);
             }

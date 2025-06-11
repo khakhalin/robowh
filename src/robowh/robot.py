@@ -3,12 +3,15 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from typing import List, Tuple, Literal, Optional, cast
+from typing import List, Tuple, Literal, Optional, cast, TypeAlias
 
 from robowh.custom_types import RobotAction, Product, Coords
 from robowh.universe import Universe
 from robowh.utils import grid_codes
 from robowh.strategies import MoveStrategy
+
+
+RobotState: TypeAlias = Literal["idling", "moving", "blocked"]
 
 class Robot:
     """A robot in the universe."""
@@ -25,7 +28,7 @@ class Robot:
         # Action is a sequence of action proper + optional coords, product
         self.current_action:Optional[RobotAction] = None # None in-between actions or while idling
         self.action_queue:List[RobotAction] = []  # A queue of scheduled actions
-        self.state:Literal["idling", "moving", "blocked"] = "idling"
+        self.state:RobotState = "idling"
         self.next_moves:List[Tuple[int]] = []  # Placeholder for a sequence of steps in the queue
         self.load = None  # What the robot is carrying
 
@@ -112,8 +115,7 @@ class Robot:
                 )
 
         if len(self.next_moves) ==0: # If it's still zero, then the calculation above failed
-            self.universe.grid[self.x, self.y] = grid_codes['confused']
-            self.state = 'blocked'
+            self.set_state("blocked")
             return
 
         movement = self.next_moves.pop(0)  # Next element (reading L to R)
@@ -125,22 +127,32 @@ class Robot:
         # design choice, but let's consider it a case of bare-bones "observer pattern";
         # we're just communicating the change to the universe. Maybe we'll refactor it to
         # something slightly more elegant later.
-        if self.universe.grid_is_free(new_x, new_y):  # Can move
+        if self.universe.grid_is_free(new_x, new_y):  # Can move to this pixel
             self.universe.grid[self.x, self.y] = grid_codes['empty']
             self.x, self.y = new_x, new_y
-            self.universe.grid[self.x, self.y] = grid_codes['robot']
-            if self.state == "blocked":
-                # It if was blocked previously, change the total blocked count
-                self.universe.observer.n_blocked -= 1
-                self.state = "moving"
+            self.set_state("moving")
         else:  # Cannot move
-            # Change color on the map:
-            self.universe.grid[self.x, self.y] = grid_codes['confused']
-            # logger.debug(f"{self.name} stumbled at ({self.x}, {self.y})")
-            self.state = "blocked"
-            self.universe.observer.n_blocked += 1
+            self.set_state("blocked")
             # Depending on the strategy, it could be a reasonable point to replan from scratch.
             # TODO: introduce some flexibility here. Always replan? Sometimes replan?
+
+
+    def set_state(self, new_state:RobotState):
+        """Set state, but also report this change to the Observer."""
+        if new_state != "blocked":
+            # Nice moving robot
+            self.universe.grid[self.x, self.y] = grid_codes['robot']
+            if self.state == "blocked":  # Just got unblocked
+                self.universe.observer.n_blocked -= 1
+                # logger.warning(f"Unblocking {self.name}")
+        if new_state == "blocked":
+            # Confused robot
+            # logger.debug(f"{self.name} stumbled at ({self.x}, {self.y})")
+            self.universe.grid[self.x, self.y] = grid_codes['confused']
+            if self.state != "blocked":  # Just got confused
+                self.universe.observer.n_blocked += 1
+                # logger.error(f"Blocking {self.name}")
+        self.state = new_state
 
 
     def assign_task(

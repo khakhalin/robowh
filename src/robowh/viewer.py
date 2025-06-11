@@ -41,6 +41,7 @@ class Viewer:
                 "n_tasks": self.universe.observer.n_tasks,
                 "n_shelves": self.universe.shelves.n_items,
                 "n_bay": self.universe.bays.n_items,
+                "sh_blocked": 100 * self.universe.observer.n_blocked / self.universe.N_ROBOTS
                 })
 
         @self.app.route('/get_grid')
